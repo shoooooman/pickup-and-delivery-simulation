@@ -10,13 +10,13 @@ import static constant.ConstUser.*;
 
 public class GridNode extends Node {
     static int id = 0;
-    ArrayDeque<Point> path;
-    Point next, prev, dest;
+    ArrayDeque<GridPoint> path;
+    GridPoint next, prev, dest;
     boolean done = false;
     boolean stay = false;
     boolean waiting = false;
-    ArrayDeque<Point> requesting = new ArrayDeque<>();
-    ArrayDeque<Point> locking = new ArrayDeque<>();
+    ArrayDeque<GridPoint> requesting = new ArrayDeque<>();
+    ArrayDeque<GridPoint> locking = new ArrayDeque<>();
     int acceptedLocks = MAX_LOCKS;
     ArrayList<Node> waitingFrom = new ArrayList<>();
 
@@ -36,18 +36,20 @@ public class GridNode extends Node {
     @Override
     public void onClock() {
         this.setColor(Color.blue);
-        Point here = this.getLocation();
+        GridPoint here = this.getLocation();
         if (here.equals(next)) {
-            System.out.println("ID: " + getID() + " (" + here.getX()/CELL_SIZE_X + "," + here.getY()/CELL_SIZE_Y + ")");
-            System.out.print("ID: " + getID() + " locking ");
-            for (Point p : locking) {
-                System.out.print("(" + p.getX()/CELL_SIZE_X + "," + p.getY()/CELL_SIZE_Y + ") ");
+            // GRID_LOG("(" + here.getX()/CELL_SIZE_X + "," + here.getY()/CELL_SIZE_Y + ")");
+            GRID_LOG(here);
+            GRID_LOG("locking ", false);
+            for (GridPoint p : locking) {
+                // System.out.print("(" + p.getX()/CELL_SIZE_X + "," + p.getY()/CELL_SIZE_Y + ") ");
+                System.out.print(p);
             }
             System.out.println();
 
             boolean released = locking.remove(next);
             if (released)
-                System.out.println("ID: " + getID() + "released " + prev.getX()/CELL_SIZE_X + "," + prev.getY()/CELL_SIZE_Y + ")");
+                GRID_LOG("released " + prev);
 
             if (done)
                 this.setColor(Color.green);
@@ -57,7 +59,7 @@ public class GridNode extends Node {
             if (!done && !waiting) {
                 acceptedLocks = MAX_LOCKS;
                 sendRequest();
-                waitingFrom = (ArrayList)this.getNeighbors();
+                waitingFrom = (ArrayList<Node>)this.getNeighbors();
                 waiting = true;
                 stay = true;
             }
@@ -72,7 +74,7 @@ public class GridNode extends Node {
                     waiting = false;
                     stay = false;
                 } else {
-                    System.out.print("ID: " + getID() + " waitingFrom ");
+                    GRID_LOG("waitingFrom ", false);
                     for (Node node : waitingFrom)
                         System.out.print(node.getID() + " ");
                     System.out.println();
@@ -81,7 +83,7 @@ public class GridNode extends Node {
             }
             if (!waiting) {
                 if (here.equals(dest)) {
-                    System.out.println("ID: " + getID() + " complete!");
+                    GRID_LOG("complete!");
                     // when completing the task, the node is regarded as absence
                     locking.remove(next);
                     done = true;
@@ -92,7 +94,7 @@ public class GridNode extends Node {
                     setDirection(next);
                 } else {
                     // when can get no locks
-                    System.out.println("ID: " + getID() + " staying");
+                    GRID_LOG("staying");
                     stay = true;
                 }
             }
@@ -105,7 +107,8 @@ public class GridNode extends Node {
     }
     @Override
     public void onMessage(Message msg) {
-        HashMap<String, Object> request = (HashMap)msg.getContent();
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> request = (HashMap<String, Object>) msg.getContent();
         String topic = (String)request.get("topic");
 
         switch(topic) {
@@ -118,6 +121,16 @@ public class GridNode extends Node {
             default:
                 break;
         }
+    }
+
+    private void GRID_LOG(Object log) {
+        System.out.println("ID: " + getID() + " " + log);
+    }
+    private void GRID_LOG(Object log, boolean newLine) {
+        if (newLine)
+            System.out.println("ID: " + getID() + " " + log);
+        else
+            System.out.print  ("ID: " + getID() + " " + log);
     }
 
     /**
@@ -176,7 +189,7 @@ public class GridNode extends Node {
         content.put("locations", requesting.clone());
         Object obj = (Object)content;
         Message msg = new Message(content);
-        System.out.println("ID: " + getID() + " sending request");
+        GRID_LOG("sending request");
         sendAll(msg);
     }
 
@@ -187,15 +200,17 @@ public class GridNode extends Node {
      */
     private void receiveRequest(Message msg) {
         Node sender = msg.getSender();
-        System.out.println("ID: " + getID() + " received request from " + sender.getID());
-        HashMap<String, Object> request = (HashMap)msg.getContent();
-        ArrayDeque<Point> locations = (ArrayDeque)request.get("locations");
+        GRID_LOG("received request from " + sender.getID());
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> request = (HashMap<String, Object>) msg.getContent();
+        @SuppressWarnings("unchecked")
+        ArrayDeque<GridPoint> locations = (ArrayDeque<GridPoint>) request.get("locations");
         HashMap<String, Object> content = new HashMap<>();
         content.put("topic", "reply");
 
         boolean priority; // for this node
         int accepted = 0;
-        for (Point location : locations) {
+        for (GridPoint location : locations) {
             if (!done && location.equals(this.getLocation())) {
                 priority = true;
             } else if (locking.contains(location)) {
@@ -229,14 +244,20 @@ public class GridNode extends Node {
      */
     private void receiveReply(Message msg) {
         Node sender = msg.getSender();
-        System.out.println("ID: " + getID() + " received reply from " + sender.getID());
-        HashMap<String, Object> reply = (HashMap)msg.getContent();
+        GRID_LOG("received reply from " + sender.getID());
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> reply = (HashMap<String, Object>) msg.getContent();
         acceptedLocks = Math.min(acceptedLocks, (int)reply.get("ok"));
         boolean removed = waitingFrom.remove(sender);
         if (removed)
-            System.out.println("ID: " + getID() + " removed " + sender.getID());
+            GRID_LOG("removed " + sender.getID());
         else
-            System.out.println("ID: " + getID() + " remove failed");
+            GRID_LOG("remove failed");
+    }
+
+    @Override
+    public GridPoint getLocation() {
+        return new GridPoint(getX(), getY());
     }
 
     @Override

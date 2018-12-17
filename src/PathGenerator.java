@@ -6,31 +6,31 @@ import java.util.Random;
 import static constant.ConstEnvironment.*;
 
 public class PathGenerator {
-    ArrayDeque<Point> locations;
+    ArrayDeque<GridPoint> locations;
 
     /**
      * The first argument is for debugging
      */
-    public ArrayDeque<Point> newPath(Node n, Point cl) {
-        Point dest = newDestination(cl);
-        System.out.println("ID: " + n.getID() + " dest: (" + dest.getX()/CELL_SIZE_X+ "," + dest.getY()/CELL_SIZE_Y+ ")");
+    public ArrayDeque<GridPoint> newPath(Node n, Point cl) {
+        GridPoint dest = newDestination(cl);
+        System.out.println("ID: " + n.getID() + " dest: " + dest + ")");
         HashMap<String, Integer> dist = getManDist(dest, cl);
-        locations = new ArrayDeque<Point>();
+        locations = new ArrayDeque<GridPoint>();
 
-        Point next = cl;
-        System.out.println("ID: " + n.getID() + " init: (" + cl.getX()/CELL_SIZE_X+ "," + cl.getY()/CELL_SIZE_Y+ ")");
+        GridPoint next = new GridPoint(cl.getX(), cl.getY());
+        System.out.println("ID: " + n.getID() + " init: " + next + ")");
         while(true) {
             next = getNextLocation(next, dist);
             if (next == null) break;
-            System.out.println("ID: " + n.getID() + " path: (" + next.getX()/CELL_SIZE_X+ "," + next.getY()/CELL_SIZE_Y+ ")");
+            System.out.println("ID: " + n.getID() + " path: " + next + ")");
             locations.add(next);
         }
         return locations;
     }
 
-    private Point newDestination(Point start) {
+    private GridPoint newDestination(Point start) {
         Random rand = new Random();
-        Point dest = new Point(rand.nextInt(GRID_SIZE_X)*CELL_SIZE_X, rand.nextInt(GRID_SIZE_Y)*CELL_SIZE_Y);
+        GridPoint dest = new GridPoint(rand.nextInt(GRID_SIZE_X)*CELL_SIZE_X, rand.nextInt(GRID_SIZE_Y)*CELL_SIZE_Y);
         return dest;
     }
 
@@ -47,7 +47,7 @@ public class PathGenerator {
         return dist;
     }
 
-    private Point getNextLocation(Point location, HashMap<String, Integer> dist) {
+    private GridPoint getNextLocation(GridPoint location, HashMap<String, Integer> dist) {
         final double lx = location.getX();
         final double ly = location.getY();
         int dx = dist.get("x");
@@ -58,24 +58,24 @@ public class PathGenerator {
             int diff = dy>0 ? -1 : 1;
             dy = dy + diff;
             dist.put("y", dy);
-            return new Point(lx, ly-diff*CELL_SIZE_Y);
+            return new GridPoint(lx, ly-diff*CELL_SIZE_Y);
         } else if (dy == 0) {
             int diff = dx>0 ? -1 : 1;
             dx = dx + diff;
             dist.put("x", dx);
-            return new Point(lx-diff*CELL_SIZE_X, ly);
+            return new GridPoint(lx-diff*CELL_SIZE_X, ly);
         } else {
             double rn = Math.random()*2;
             if (rn < 1.0) {
                 int diff = dy>0 ? -1 : 1;
                 dy = dy + diff;
                 dist.put("y", dy);
-                return new Point(lx, ly-diff*CELL_SIZE_Y);
+                return new GridPoint(lx, ly-diff*CELL_SIZE_Y);
             } else {
                 int diff = dx>0 ? -1 : 1;
                 dx = dx + diff;
                 dist.put("x", dx);
-                return new Point(lx-diff*CELL_SIZE_X, ly);
+                return new GridPoint(lx-diff*CELL_SIZE_X, ly);
             }
 
         }
