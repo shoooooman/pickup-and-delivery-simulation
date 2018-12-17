@@ -1,4 +1,5 @@
 import jbotsim.Point;
+import jbotsim.Node;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Random;
@@ -7,17 +8,21 @@ import static constant.ConstEnvironment.*;
 public class PathGenerator {
     ArrayDeque<Point> locations;
 
-    public ArrayDeque<Point> newPath(Point cl) {
+    /**
+     * The first argument is for debugging
+     */
+    public ArrayDeque<Point> newPath(Node n, Point cl) {
         Point dest = newDestination(cl);
-        System.out.println("dest: (" + dest.getX()/CELL_SIZE_X+ "," + dest.getY()/CELL_SIZE_Y+ ")");
+        System.out.println("ID: " + n.getID() + " dest: (" + dest.getX()/CELL_SIZE_X+ "," + dest.getY()/CELL_SIZE_Y+ ")");
         HashMap<String, Integer> dist = getManDist(dest, cl);
         locations = new ArrayDeque<Point>();
 
         Point next = cl;
+        System.out.println("ID: " + n.getID() + " init: (" + cl.getX()/CELL_SIZE_X+ "," + cl.getY()/CELL_SIZE_Y+ ")");
         while(true) {
             next = getNextLocation(next, dist);
             if (next == null) break;
-            System.out.println("path: (" + next.getX()/CELL_SIZE_X+ "," + next.getY()/CELL_SIZE_Y+ ")");
+            System.out.println("ID: " + n.getID() + " path: (" + next.getX()/CELL_SIZE_X+ "," + next.getY()/CELL_SIZE_Y+ ")");
             locations.add(next);
         }
         return locations;
