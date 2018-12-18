@@ -43,55 +43,68 @@ public class GridNode extends Node {
         this.setColor(Color.blue);
         GridPoint here = this.getLocation();
         if (here.equals(next)) {
-            // GRID_LOG("(" + here.getX()/CELL_SIZE_X + "," + here.getY()/CELL_SIZE_Y + ")");
-            GRID_LOG(here);
-            GRID_LOG("locking ", false);
-            for (GridPoint p : locking) {
-                // System.out.print("(" + p.getX()/CELL_SIZE_X + "," + p.getY()/CELL_SIZE_Y + ") ");
-                System.out.print(p);
-            }
-            System.out.println();
-
-            boolean released = locking.remove(next);
-            if (released)
-                GRID_LOG("released " + prev);
-
             if (done)
                 this.setColor(Color.green);
             else
                 this.setColor(Color.red);
 
+            /* for debugging */
+            GRID_LOG(here);
+            GRID_LOG("locking ", false);
+            for (GridPoint p : locking) {
+                System.out.print(p);
+            }
+            System.out.println();
+            /* end debugging */
+
+            boolean released = locking.remove(next);
+            if (released)
+                GRID_LOG("released " + prev);
+
             if (!done && !waiting) {
                 acceptedLocks = MAX_LOCKS;
                 sendRequest();
-                waitingFrom = (ArrayList<Node>)this.getNeighbors();
+                waitingFrom = (ArrayList<Node>) this.getNeighbors();
                 waiting = true;
                 stay = true;
             }
             if (waiting) {
                 // when got replies from all the other nodes
                 if (waitingFrom.isEmpty()) {
-                    System.out.println("ID: " + getID() + " acceptedLocks=" + acceptedLocks);
+
+                    /* for debugging */
+                    GRID_LOG("acceptedLocks=" + acceptedLocks);
+                    /* end debugging */
+
                     for (int i = 0; i < acceptedLocks; i++) {
                         if (requesting.isEmpty()) break;
                         locking.add(requesting.remove());
                     }
+
                     waiting = false;
                     stay = false;
                 } else {
+                    /* for debugging */
                     GRID_LOG("waitingFrom ", false);
                     for (Node node : waitingFrom)
                         System.out.print(node.getID() + " ");
                     System.out.println();
+                    /* end debugging */
+
                     stay = true;
-                    // set direction this node is heading to
-                    if (!requesting.isEmpty())
+                    // set direction this node is heading to in the next step
+                    if      (!locking.isEmpty())
+                        setDirection(locking.element());
+                    else if (!requesting.isEmpty())
                         setDirection(requesting.element());
                 }
             }
             if (!done && !waiting) {
                 if (here.equals(dest)) {
+                    /* for debugging */
                     GRID_LOG("complete!");
+                    /* end debugging */
+
                     // when completing the task, the node is regarded as absence
                     locking.remove(next);
                     done = true;
@@ -102,7 +115,11 @@ public class GridNode extends Node {
                     setDirection(next);
                 } else {
                     // when can get no locks
+
+                    /* for debugging */
                     GRID_LOG("staying");
+                    /* end debugging */
+
                     stay = true;
                 }
             }
@@ -208,7 +225,11 @@ public class GridNode extends Node {
      */
     private void receiveRequest(Message msg) {
         Node sender = msg.getSender();
+
+        /* for debugging */
         GRID_LOG("received request from " + sender.getID());
+        /* end debugging */
+
         @SuppressWarnings("unchecked")
         HashMap<String, Object> request = (HashMap<String, Object>) msg.getContent();
         @SuppressWarnings("unchecked")
@@ -252,15 +273,23 @@ public class GridNode extends Node {
      */
     private void receiveReply(Message msg) {
         Node sender = msg.getSender();
+
+        /* for debugging */
         GRID_LOG("received reply from " + sender.getID());
+        /* end debugging */
+
         @SuppressWarnings("unchecked")
         HashMap<String, Object> reply = (HashMap<String, Object>) msg.getContent();
         acceptedLocks = Math.min(acceptedLocks, (int)reply.get("ok"));
         boolean removed = waitingFrom.remove(sender);
+
+        /* for debugging */
         if (removed)
             GRID_LOG("removed " + sender.getID());
         else
             GRID_LOG("remove failed");
+        /* end debugging */
+
     }
 
     @Override
