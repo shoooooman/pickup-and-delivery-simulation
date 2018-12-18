@@ -23,7 +23,7 @@ public class GridNode extends Node {
     protected int clk = 0;
 
     public GridNode() {
-        setIcon("/fig/node.png");
+        setIcon("/icon/node.png");
         setSize(10);
     }
 
