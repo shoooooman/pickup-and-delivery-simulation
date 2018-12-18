@@ -25,6 +25,12 @@ public class GridPoint extends Point {
         return (int) getY()/CELL_SIZE_Y;
     }
 
+    public int calcManDist(GridPoint p2) {
+        int coordX2 = p2.getCoordX();
+        int coordY2 = p2.getCoordY();
+        return Math.abs(getCoordX() - coordX2) + Math.abs(getCoordY() - coordY2);
+    }
+
     @Override
     public String toString() {
         String str = "(" + getCoordX() + "," + getCoordY() + ")";

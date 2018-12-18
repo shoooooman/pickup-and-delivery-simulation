@@ -10,15 +10,17 @@ import static constant.ConstUser.*;
 
 public class GridNode extends Node {
     static int id = 0;
-    ArrayDeque<GridPoint> path;
-    GridPoint next, prev, dest;
-    boolean done = false;
-    boolean stay = false;
-    boolean waiting = false;
-    ArrayDeque<GridPoint> requesting = new ArrayDeque<>();
-    ArrayDeque<GridPoint> locking = new ArrayDeque<>();
-    int acceptedLocks = MAX_LOCKS;
-    ArrayList<Node> waitingFrom = new ArrayList<>();
+    protected ArrayDeque<GridPoint> path;
+    protected GridPoint next, prev, dest;
+    protected boolean done = false;
+    protected boolean stay = false;
+    protected boolean waiting = false;
+    protected ArrayDeque<GridPoint> requesting = new ArrayDeque<>();
+    protected ArrayDeque<GridPoint> locking = new ArrayDeque<>();
+    protected int acceptedLocks = MAX_LOCKS;
+    protected ArrayList<Node> waitingFrom = new ArrayList<>();
+    protected int lrd = 0;
+    protected int clk = 0;
 
     public GridNode() {
         setIcon("/fig/node.png");
@@ -36,17 +38,19 @@ public class GridNode extends Node {
         } else {
             dest = getLocation();
         }
-        next = this.getLocation();
+        next = prev = this.getLocation();
     }
     @Override
     public void onClock() {
-        this.setColor(Color.blue);
+        if (done)
+            this.setColor(Color.green);
+        else
+            this.setColor(Color.blue);
+
         GridPoint here = this.getLocation();
-        if (here.equals(next)) {
-            if (done)
-                this.setColor(Color.green);
-            else
-                this.setColor(Color.red);
+
+        if (!done && here.equals(next)) {
+            this.setColor(Color.red);
 
             /* for debugging */
             GRID_LOG(here);
@@ -57,11 +61,12 @@ public class GridNode extends Node {
             System.out.println();
             /* end debugging */
 
+            prev = next;
             boolean released = locking.remove(next);
             if (released)
                 GRID_LOG("released " + prev);
 
-            if (!done && !waiting) {
+            if (!waiting) {
                 acceptedLocks = MAX_LOCKS;
                 sendRequest();
                 waitingFrom = (ArrayList<Node>) this.getNeighbors();
@@ -99,7 +104,7 @@ public class GridNode extends Node {
                         setDirection(requesting.element());
                 }
             }
-            if (!done && !waiting) {
+            if (!waiting) {
                 if (here.equals(dest)) {
                     /* for debugging */
                     GRID_LOG("complete!");
@@ -109,7 +114,6 @@ public class GridNode extends Node {
                     locking.remove(next);
                     done = true;
                 } else if (!locking.isEmpty()) {
-                    prev = next;
                     next = locking.element();
                     stay = false;
                     setDirection(next);
@@ -209,10 +213,13 @@ public class GridNode extends Node {
             if (path.isEmpty()) break;
             requesting.add(path.remove());
         }
+        lrd = clk + 1;
+
         HashMap<String, Object> content = new HashMap<>();
         content.put("topic", "request");
         content.put("locations", requesting.clone());
-        Object obj = (Object)content;
+        content.put("lrd", lrd);
+        Object obj = (Object) content;
         Message msg = new Message(content);
         GRID_LOG("sending request");
         sendAll(msg);
@@ -234,27 +241,18 @@ public class GridNode extends Node {
         HashMap<String, Object> request = (HashMap<String, Object>) msg.getContent();
         @SuppressWarnings("unchecked")
         ArrayDeque<GridPoint> locations = (ArrayDeque<GridPoint>) request.get("locations");
+        @SuppressWarnings("unchecked")
+        int senderLrd = (int) request.get("lrd");
+        clk = Math.max(clk, senderLrd);
+
         HashMap<String, Object> content = new HashMap<>();
         content.put("topic", "reply");
 
         boolean priority; // for this node
         int accepted = 0;
+        Priority judge = new Priority();
         for (GridPoint location : locations) {
-            if (!done && location.equals(this.getLocation())) {
-                priority = true;
-            } else if (locking.contains(location)) {
-                priority = true;
-            } else if (!requesting.contains(location)) {
-                priority = false;
-            } else {
-                if (this.getID() < sender.getID())
-                    priority = true;
-                // double rand = Math.random()*2;
-                // if (rand < 1.0)
-                //     priority = true;
-                else
-                    priority = false;
-            }
+            priority = judge.getPriority(this, (GridNode) sender, msg, location);
 
             if (priority) {
                 break;
@@ -292,6 +290,43 @@ public class GridNode extends Node {
 
     }
 
+    public GridPoint getNext() {
+        return next;
+    }
+
+    public GridPoint getPrev() {
+        return prev;
+    }
+
+    public GridPoint getDestination() {
+        return dest;
+    }
+
+    public int getLrd() {
+        return lrd;
+    }
+
+    public ArrayDeque<GridPoint> getLocking() {
+        return locking;
+    }
+
+    public ArrayDeque<GridPoint> getRequesting() {
+        return requesting;
+    }
+
+    public boolean isDone() {
+        return done;
+    }
+
+    public boolean isWaiting() {
+        return waiting;
+    }
+
+    public boolean isStay() {
+        return stay;
+    }
+
+    // FIXME: change name to getCoordinates
     @Override
     public GridPoint getLocation() {
         return new GridPoint(getX(), getY());
