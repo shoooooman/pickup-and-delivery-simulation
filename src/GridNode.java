@@ -20,6 +20,11 @@ public class GridNode extends Node {
     int acceptedLocks = MAX_LOCKS;
     ArrayList<Node> waitingFrom = new ArrayList<>();
 
+    public GridNode() {
+        setIcon("/fig/node.png");
+        setSize(10);
+    }
+
     @Override
     public void onStart() {
         setID(id++);
@@ -79,9 +84,12 @@ public class GridNode extends Node {
                         System.out.print(node.getID() + " ");
                     System.out.println();
                     stay = true;
+                    // set direction this node is heading to
+                    if (!requesting.isEmpty())
+                        setDirection(requesting.element());
                 }
             }
-            if (!waiting) {
+            if (!done && !waiting) {
                 if (here.equals(dest)) {
                     GRID_LOG("complete!");
                     // when completing the task, the node is regarded as absence

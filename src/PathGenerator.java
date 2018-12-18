@@ -13,16 +13,16 @@ public class PathGenerator {
      */
     public ArrayDeque<GridPoint> newPath(Node n, Point cl) {
         GridPoint dest = newDestination(cl);
-        System.out.println("ID: " + n.getID() + " dest: " + dest + ")");
+        System.out.println("ID: " + n.getID() + " dest: " + dest);
         HashMap<String, Integer> dist = getManDist(dest, cl);
         locations = new ArrayDeque<GridPoint>();
 
         GridPoint next = new GridPoint(cl.getX(), cl.getY());
-        System.out.println("ID: " + n.getID() + " init: " + next + ")");
+        System.out.println("ID: " + n.getID() + " init: " + next);
         while(true) {
             next = getNextLocation(next, dist);
             if (next == null) break;
-            System.out.println("ID: " + n.getID() + " path: " + next + ")");
+            System.out.println("ID: " + n.getID() + " path: " + next);
             locations.add(next);
         }
         return locations;
