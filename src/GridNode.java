@@ -209,7 +209,7 @@ public class GridNode extends Node {
      * then send a request message to all the other nodes
      */
     private void sendRequest() {
-        while (requesting.size() < MAX_LOCKS) {
+        while (requesting.size() + locking.size() < MAX_LOCKS) {
             if (path.isEmpty()) break;
             requesting.add(path.remove());
         }
@@ -324,6 +324,15 @@ public class GridNode extends Node {
 
     public boolean isStay() {
         return stay;
+    }
+
+    public boolean isOnGridPoint() {
+        double x = getX();
+        double y = getY();
+        if (x % CELL_SIZE_X == 0 && y % CELL_SIZE_Y == 0)
+            return true;
+        else
+            return false;
     }
 
     // FIXME: change name to getCoordinates

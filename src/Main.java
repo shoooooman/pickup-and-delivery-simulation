@@ -11,6 +11,7 @@ public class Main {
     public static void main(String[] args) {
         Topology tp = new Topology();
         JViewer jv = new JViewer(tp);
+        jv.getJTopology().addBackgroundPainter(new PathPainter());
         jv.getJTopology().addBackgroundPainter(new BackgroundPainter());
         Random rand = new Random();
         ArrayList<Point> initPoint = new ArrayList<>();
