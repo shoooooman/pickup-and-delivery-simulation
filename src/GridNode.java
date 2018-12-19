@@ -49,6 +49,50 @@ public class GridNode extends Node {
 
         GridPoint here = this.getLocation();
 
+        // when reaching the destination
+        if (!done && here.equals(dest)) {
+            /* for debugging */
+            GRID_LOG("complete!");
+            /* end debugging */
+
+            prev = dest;
+            // when completing the task, the node is regarded as absence
+            locking.remove(next);
+            done = true;
+        }
+
+        if (!done && !waiting) {
+            acceptedLocks = MAX_LOCKS;
+            sendRequest();
+            waitingFrom = (ArrayList<Node>) this.getNeighbors();
+            waiting = true; // wait for replies from all the other nodes
+        }
+        if (!done && waiting) {
+            // when got replies from all the other nodes
+            if (waitingFrom.isEmpty()) {
+
+                /* for debugging */
+                GRID_LOG("acceptedLocks=" + acceptedLocks);
+                /* end debugging */
+
+                for (int i = 0; i < acceptedLocks; i++) {
+                    if (requesting.isEmpty()) break;
+                    locking.add(requesting.remove());
+                }
+
+                waiting = false;
+            } else {
+                /* for debugging */
+                GRID_LOG("waitingFrom ", false);
+                for (Node node : waitingFrom)
+                    System.out.print(node.getID() + " ");
+                System.out.println();
+                /* end debugging */
+
+            }
+        }
+
+        // when arriving at a grid point
         if (!done && here.equals(next)) {
             this.setColor(Color.red);
 
@@ -63,69 +107,26 @@ public class GridNode extends Node {
 
             prev = next;
             boolean released = locking.remove(next);
+            /* for debugging */
             if (released)
                 GRID_LOG("released " + prev);
+            /* end debugging */
 
-            if (!waiting) {
-                acceptedLocks = MAX_LOCKS;
-                sendRequest();
-                waitingFrom = (ArrayList<Node>) this.getNeighbors();
-                waiting = true;
+            if (!locking.isEmpty()) {
+                next = locking.element();
+                stay = false;
+                setDirection(next);
+            } else {
+                // when can get no locks
+
+                /* for debugging */
+                GRID_LOG("staying");
+                /* end debugging */
+
+                if (!requesting.isEmpty())
+                    setDirection(requesting.element());
+
                 stay = true;
-            }
-            if (waiting) {
-                // when got replies from all the other nodes
-                if (waitingFrom.isEmpty()) {
-
-                    /* for debugging */
-                    GRID_LOG("acceptedLocks=" + acceptedLocks);
-                    /* end debugging */
-
-                    for (int i = 0; i < acceptedLocks; i++) {
-                        if (requesting.isEmpty()) break;
-                        locking.add(requesting.remove());
-                    }
-
-                    waiting = false;
-                    stay = false;
-                } else {
-                    /* for debugging */
-                    GRID_LOG("waitingFrom ", false);
-                    for (Node node : waitingFrom)
-                        System.out.print(node.getID() + " ");
-                    System.out.println();
-                    /* end debugging */
-
-                    stay = true;
-                    // set direction this node is heading to in the next step
-                    if      (!locking.isEmpty())
-                        setDirection(locking.element());
-                    else if (!requesting.isEmpty())
-                        setDirection(requesting.element());
-                }
-            }
-            if (!waiting) {
-                if (here.equals(dest)) {
-                    /* for debugging */
-                    GRID_LOG("complete!");
-                    /* end debugging */
-
-                    // when completing the task, the node is regarded as absence
-                    locking.remove(next);
-                    done = true;
-                } else if (!locking.isEmpty()) {
-                    next = locking.element();
-                    stay = false;
-                    setDirection(next);
-                } else {
-                    // when can get no locks
-
-                    /* for debugging */
-                    GRID_LOG("staying");
-                    /* end debugging */
-
-                    stay = true;
-                }
             }
         }
     }
@@ -335,7 +336,6 @@ public class GridNode extends Node {
             return false;
     }
 
-    // FIXME: change name to getCoordinates
     @Override
     public GridPoint getLocation() {
         return new GridPoint(getX(), getY());

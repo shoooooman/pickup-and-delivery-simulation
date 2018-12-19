@@ -12,7 +12,7 @@ public class Main {
         Topology tp = new Topology();
         JViewer jv = new JViewer(tp);
         jv.getJTopology().addBackgroundPainter(new PathPainter());
-        jv.getJTopology().addBackgroundPainter(new BackgroundPainter());
+        jv.getJTopology().addBackgroundPainter(new GridPainter());
         Random rand = new Random();
         ArrayList<Point> initPoint = new ArrayList<>();
         for (int i = 0; i < NODE_NUM; i++) {

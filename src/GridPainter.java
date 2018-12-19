@@ -2,7 +2,7 @@ import jbotsim.Topology;
 import static constant.ConstEnvironment.*;
 import java.awt.*;
 
-public class BackgroundPainter implements jbotsimx.ui.painting.BackgroundPainter {
+public class GridPainter implements jbotsimx.ui.painting.BackgroundPainter {
     @Override
     public void paintBackground(Graphics2D g, Topology tp) {
         g.setColor(Color.gray);
