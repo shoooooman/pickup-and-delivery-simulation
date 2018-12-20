@@ -19,8 +19,9 @@ public class GridNode extends Node {
     protected ArrayDeque<GridPoint> locking = new ArrayDeque<>();
     protected int acceptedLocks = MAX_LOCKS;
     protected ArrayList<Node> waitingFrom = new ArrayList<>();
-    protected int lrd = 0;
-    protected int clk = 0;
+    protected int lrd = 0; // last request date
+    protected int clk = 0; // logical clock
+    protected HashMap<GridPoint, Integer> numOfReq = new HashMap<>();
 
     public GridNode() {
         setIcon("/icon/node.png");
@@ -31,7 +32,7 @@ public class GridNode extends Node {
     public void onStart() {
         setID(id++);
         PathGenerator pathGen = new PathGenerator();
-        path = pathGen.newPath(this, this.getLocation());
+        path = pathGen.newPath(getID(), this.getLocation());
         // when init point is the same as dest, path will be empty
         if (!path.isEmpty()) {
             dest = path.getLast();
@@ -59,6 +60,16 @@ public class GridNode extends Node {
             // when completing the task, the node is regarded as absence
             locking.remove(next);
             done = true;
+
+            // this.setColor(Color.green);
+            // // done = false;
+            // PathGenerator pathGen = new PathGenerator();
+            // path = pathGen.newPath(this, this.getLocation());
+            // if (!path.isEmpty()) {
+            //     dest = path.getLast();
+            // } else {
+            //     dest = getLocation();
+            // }
         }
 
         if (!done && !waiting) {
@@ -77,7 +88,9 @@ public class GridNode extends Node {
 
                 for (int i = 0; i < acceptedLocks; i++) {
                     if (requesting.isEmpty()) break;
-                    locking.add(requesting.remove());
+                    GridPoint point = requesting.remove();
+                    locking.add(point);
+                    numOfReq.remove(point);
                 }
 
                 waiting = false;
@@ -215,11 +228,19 @@ public class GridNode extends Node {
             requesting.add(path.remove());
         }
         lrd = clk + 1;
+        for (GridPoint point : requesting) {
+            int norq = numOfReq.getOrDefault(point, 0);
+            if (norq == 0)
+                numOfReq.put(point, 1);
+            else
+                numOfReq.replace(point, norq+1);
+        }
 
         HashMap<String, Object> content = new HashMap<>();
         content.put("topic", "request");
         content.put("locations", requesting.clone());
         content.put("lrd", lrd);
+        content.put("numOfReq", numOfReq);
         Object obj = (Object) content;
         Message msg = new Message(content);
         GRID_LOG("sending request");
@@ -307,8 +328,13 @@ public class GridNode extends Node {
         return lrd;
     }
 
+    public HashMap<GridPoint, Integer> getNumOfReq() {
+        return numOfReq;
+    }
+
     public ArrayDeque<GridPoint> getLocking() {
         return locking;
+        // return new ArrayDeque<GridPoint>(locking); // shallow copy
     }
 
     public ArrayDeque<GridPoint> getRequesting() {

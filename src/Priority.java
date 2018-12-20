@@ -33,6 +33,9 @@ public class Priority {
         int idR = receiver.getID();
         int idS = sender.getID();
 
+        int norqR = receiver.getNumOfReq().getOrDefault(dest, 0); // return 0 if the value is null
+        int norqS = sender.getNumOfReq().getOrDefault(dest, 0);
+
         GridPoint currentCoords = receiver.getLocation();
         GridPoint previousCoords = receiver.getPrev();
 
@@ -55,10 +58,16 @@ public class Priority {
                 } else if (pDisToCs && disCsR > disCsS) {
                     return false;
                 } else {
-                    if (idR < idS) {
+                    if        (pNumOfReq && norqR > norqS) {
                         return true;
-                    } else {
+                    } else if (pNumOfReq && norqR < norqS) {
                         return false;
+                    } else {
+                        if (idR < idS) {
+                            return true;
+                        } else {
+                            return false;
+                        }
                     }
                 }
             }
