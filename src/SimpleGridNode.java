@@ -5,11 +5,17 @@ import jbotsim.Message;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.ArrayList;
-import java.util.Iterator;
 import static constant.ConstEnvironment.*;
 import static constant.ConstUser.*;
 
-public class GridNode extends AbstractGridNode {
+public class SimpleGridNode extends AbstractGridNode {
+    ArrayDeque<GridPoint> pointsToMove = new ArrayDeque<>();
+    SimpleGridNode() {
+        this.setPLrd(true);
+        this.setPDisToCs(false);
+        this.setPNumOfReq(false);
+    }
+
     @Override
     public void onClock() {
         if (done)
@@ -27,8 +33,8 @@ public class GridNode extends AbstractGridNode {
 
             prev = dest;
             // when completing the task, the node is regarded as absence
-            // locking.remove(next);
-            locking.clear();
+            locking.remove(next);
+            pointsToMove.remove(next);
             done = true;
 
             // this.setColor(Color.green);
@@ -42,12 +48,6 @@ public class GridNode extends AbstractGridNode {
             // }
         }
 
-        if (!done && !waiting) {
-            acceptedLocks = MAX_LOCKS;
-            sendRequest();
-            waitingFrom = (ArrayList<Node>) this.getNeighbors();
-            waiting = true; // wait for replies from all the other nodes
-        }
         if (!done && waiting) {
             // when got replies from all the other nodes
             if (waitingFrom.isEmpty()) {
@@ -60,6 +60,7 @@ public class GridNode extends AbstractGridNode {
                     if (requesting.isEmpty()) break;
                     GridPoint point = requesting.remove();
                     locking.add(point);
+                    pointsToMove.add(point);
                     numOfReq.remove(point);
                 }
 
@@ -72,6 +73,15 @@ public class GridNode extends AbstractGridNode {
                 System.out.println();
                 /* end debugging */
             }
+        }
+
+        if (pointsToMove.isEmpty()) {
+            locking.clear();
+            locking.add(prev); // current or previous point
+            acceptedLocks = MAX_LOCKS;
+            sendRequest();
+            waitingFrom = (ArrayList<Node>) this.getNeighbors();
+            waiting = true; // wait for replies from all the other nodes
         }
 
         // when arriving at a grid point
@@ -87,29 +97,15 @@ public class GridNode extends AbstractGridNode {
             System.out.println();
             /* end debugging */
 
-            // when staying prev can be equal next
-            if (!here.equals(prev)) {
-                assert(!prev.equals(next));
+            pointsToMove.remove(next);
+            prev = next;
 
-                boolean released = locking.remove(prev);
-                /* for debugging */
-                if (released)
-                    GRID_LOG("released " + prev);
-                /* end debugging */
-
-                prev = next;
-            }
-
-            // here "2" means current (or previous) point and the next point to move
-            if (locking.size() >= 2) {
-                Iterator<GridPoint> ite = locking.iterator();
-                GridPoint p = ite.next();
-                assert(p.equals(prev)); // the head of locking is current or previous point
-                next = ite.next(); // next point to move
+            if (!pointsToMove.isEmpty()) {
+                next = pointsToMove.element();
                 stay = false;
                 setDirection(next);
             } else {
-                // when can get no locks other than current point
+                // when can get no locks
 
                 /* for debugging */
                 GRID_LOG("staying");

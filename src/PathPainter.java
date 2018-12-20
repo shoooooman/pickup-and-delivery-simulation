@@ -2,6 +2,7 @@ import jbotsim.Topology;
 import jbotsim.Node;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.awt.*;
 
 public class PathPainter implements jbotsimx.ui.painting.BackgroundPainter {
@@ -13,15 +14,17 @@ public class PathPainter implements jbotsimx.ui.painting.BackgroundPainter {
 
         ArrayList<Node> nodes = (ArrayList<Node>) tp.getNodes();
         for (Node node : nodes) {
-            GridNode gnode = (GridNode) node;
+            AbstractGridNode gnode = (AbstractGridNode) node;
             ArrayDeque<GridPoint> locking = gnode.getLocking();
-            // The point that the node is on is not in locking
-            // so you need first to draw line between prev point
-            // (maybe current point) and next point
-            GridPoint start = gnode.getPrev();
-            for (GridPoint end : locking) {
-                g.drawLine((int) start.getX(), (int) start.getY(), (int) end.getX(), (int) end.getY());
-                start = end;
+
+            Iterator<GridPoint> ite = locking.iterator();
+            if (ite.hasNext()) {
+                GridPoint start = ite.next(); // current or previous point
+                while (ite.hasNext()) {
+                    GridPoint end = ite.next();
+                    g.drawLine((int) start.getX(), (int) start.getY(), (int) end.getX(), (int) end.getY());
+                    start = end;
+                }
             }
         }
     }

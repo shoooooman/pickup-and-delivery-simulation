@@ -18,7 +18,7 @@ public class Priority {
         this.pNumOfReq = pNumOfReq;
     }
 
-    public boolean getPriority(GridNode receiver, GridNode sender, Message request, GridPoint dest) {
+    public boolean getPriority(AbstractGridNode receiver, AbstractGridNode sender, Message request, GridPoint dest) {
         assert(sender == request.getSender());
 
         @SuppressWarnings("unchecked")

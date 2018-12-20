@@ -23,7 +23,8 @@ public class Main {
                 y = rand.nextInt(GRID_SIZE_Y)*CELL_SIZE_Y;
             } while (initPoint.contains(new Point(x, y)));
             initPoint.add(new Point(x, y));
-            tp.addNode(x, y, new GridNode());
+            // tp.addNode(x, y, new GridNode());
+            tp.addNode(x, y, new SimpleGridNode());
         }
         tp.setClockSpeed(CLOCK_SPEED);
         tp.setCommunicationRange(COMMUNICATION_RANGE);
