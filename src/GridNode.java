@@ -12,7 +12,9 @@ import static constant.ConstUser.*;
 public class GridNode extends AbstractGridNode {
     @Override
     public void onClock() {
-        if (done)
+        if (conceding)
+            this.setColor(Color.gray);
+        else if (done)
             this.setColor(Color.green);
         else
             this.setColor(Color.blue);
@@ -41,48 +43,44 @@ public class GridNode extends AbstractGridNode {
             // }
         }
 
-        if (!done && !waiting) {
-            acceptedLocks = MAX_LOCKS;
-            sendRequest();
-            waitingFrom = (ArrayList<Node>) this.getNeighbors();
-            waiting = true; // wait for replies from all the other nodes
-        }
         if (!done && waiting) {
             // when got replies from all the other nodes
             if (waitingFrom.isEmpty()) {
-                if (conceding && acceptedLocks == 1) {
-                    numOfDeadlock = 0;
-                    path = pathGen.newPath(getID(), next, dest);
-                    avoid = false;
-                    conceding = false;
-                    setDirection(next);
-                    stay = false;
-                }
-
+                // when this node must concede
+                // find direction to evacuate and send request
                 if (avoid) {
+                    assert(acceptedLocks == 0);
+                    avoid = false;
                     conceding = true;
                     next = this.getRandomPoint(requesting.element());
+                    setDirection(next);
                     requesting.clear();
                     numOfReq.clear();
                     path.clear();
                     path.add(next);
-                    sendRequest();
-                    waitingFrom = (ArrayList<Node>) this.getNeighbors();
-                    waiting = true;
-                } else {
-                    /* for debugging */
-                    GRID_LOG("acceptedLocks=" + acceptedLocks);
-                    /* end debugging */
-
-                    for (int i = 0; i < acceptedLocks; i++) {
-                        if (requesting.isEmpty()) break;
-                        GridPoint point = requesting.remove();
-                        locking.add(point);
-                        numOfReq.remove(point);
-                    }
-
-                    waiting = false;
                 }
+
+                // when the node for evacuation is accepted
+                if (conceding && acceptedLocks == 1) {
+                    numOfDeadlock = 0;
+                    // get path from evacuation node to destination
+                    path = pathGen.newPath(getID(), next, dest);
+                    conceding = false;
+                    stay = false;
+                }
+
+                /* for debugging */
+                GRID_LOG("acceptedLocks=" + acceptedLocks);
+                /* end debugging */
+
+                for (int i = 0; i < acceptedLocks; i++) {
+                    if (requesting.isEmpty()) break;
+                    GridPoint point = requesting.remove();
+                    locking.add(point);
+                    numOfReq.remove(point);
+                }
+
+                waiting = false;
             } else {
                 /* for debugging */
                 GRID_LOG("waitingFrom ", false);
@@ -91,6 +89,13 @@ public class GridNode extends AbstractGridNode {
                 System.out.println();
                 /* end debugging */
             }
+        }
+
+        if (!done && !waiting) {
+            acceptedLocks = MAX_LOCKS;
+            sendRequest();
+            waitingFrom = (ArrayList<Node>) this.getNeighbors();
+            waiting = true; // wait for replies from all the other nodes
         }
 
         // when arriving at a grid point
@@ -106,7 +111,7 @@ public class GridNode extends AbstractGridNode {
             System.out.println();
             /* end debugging */
 
-            // when staying prev can be equal next
+            // when staying prev can equal next
             if (!here.equals(prev)) {
                 assert(!prev.equals(next));
 

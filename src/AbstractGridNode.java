@@ -126,92 +126,141 @@ public abstract class AbstractGridNode extends Node {
         }
     }
 
+    /**
+     * Decide a random next point other than forbidden
+     */
     public GridPoint getRandomPoint(GridPoint forbidden) {
         double x = getX();
         double y = getY();
         double fx = forbidden.getX();
         double fy = forbidden.getY();
+        final int North = 0;
+        final int East  = 1;
+        final int South = 2;
+        final int West  = 3;
         GRID_LOG("getRandomPoint: (x,y)=" + getLocation() + ", (fx,fy)=" + forbidden);
         double rand;
-        if (x == 0 && y == 0) {
-            if (fx == 0.0 && y == CELL_SIZE_Y)
-                return new GridPoint(CELL_SIZE_X, 0.0);
+        int randDir = -1;
+        if (x == 0.0 && y == 0.0) { // top left corner
+            if      (fx == x+CELL_SIZE_X && fy == y)
+                randDir = South;
+            else if (fx == x && fy == y+CELL_SIZE_Y)
+                randDir = East;
             else
-                return new GridPoint(0.0, CELL_SIZE_Y);
-        } else if (x == 0 && y == CELL_SIZE_Y*GRID_SIZE_Y) {
-            if (fx == 0.0 && y == CELL_SIZE_Y*(GRID_SIZE_Y-1))
-                return new GridPoint(CELL_SIZE_X, CELL_SIZE_Y*GRID_SIZE_Y);
+                GRID_LOG("error: wrong position");
+        } else if (x == 0.0 && y == CELL_SIZE_Y*GRID_SIZE_Y) { // bottom left corner
+            if      (fx == x+CELL_SIZE_X && fy == y)
+                randDir = North;
+            else if (fx == x && fy == y-CELL_SIZE_Y)
+                randDir = East;
             else
-                return new GridPoint(0.0, CELL_SIZE_Y*(GRID_SIZE_Y-1));
-        } else if (x == CELL_SIZE_X*GRID_SIZE_X && y == CELL_SIZE_Y*GRID_SIZE_Y) {
-            if (fx == CELL_SIZE_X*GRID_SIZE_X && y == CELL_SIZE_Y*(GRID_SIZE_Y-1))
-                return new GridPoint(CELL_SIZE_X*(GRID_SIZE_X-1), CELL_SIZE_Y*GRID_SIZE_Y);
+                GRID_LOG("error: wrong position");
+        } else if (x == CELL_SIZE_X*GRID_SIZE_X && y == CELL_SIZE_Y*GRID_SIZE_Y) { // bottom right corner
+            if      (fx == x-CELL_SIZE_X && fy == y)
+                randDir = North;
+            else if (fx == x && fy == y-CELL_SIZE_Y)
+                randDir = West;
             else
-                return new GridPoint(CELL_SIZE_X*GRID_SIZE_X, CELL_SIZE_Y*(GRID_SIZE_Y-1));
-        } else if (x == CELL_SIZE_X*GRID_SIZE_X && y == 0.0) {
-            if (fx == CELL_SIZE_X*CELL_SIZE_X && y == CELL_SIZE_Y)
-                return new GridPoint(CELL_SIZE_X*(GRID_SIZE_X-1), 0.0);
+                GRID_LOG("error: wrong position");
+        } else if (x == CELL_SIZE_X*GRID_SIZE_X && y == 0.0) { // top right corner
+            if      (fx == x-CELL_SIZE_X && fy == y)
+                randDir = South;
+            else if (fx == x && fy == y+CELL_SIZE_Y)
+                randDir = West;
             else
-                return new GridPoint(CELL_SIZE_X*GRID_SIZE_X, CELL_SIZE_Y);
-        } else if (x == 0) {
+                GRID_LOG("error: wrong position");
+        } else if (x == 0) { // left edge
             rand = Math.random()*2;
-            if (fx > 0) {
-                if (rand < 1.0) return new GridPoint(x, y-CELL_SIZE_Y);
-                else            return new GridPoint(x, y+CELL_SIZE_Y);
-            } else if (y > fy) {
-                if (rand < 1.0) return new GridPoint(x, y+CELL_SIZE_Y);
-                else            return new GridPoint(CELL_SIZE_X, y);
+            if        (fx == x && fy == y-CELL_SIZE_Y) {
+                if (rand < 1.0) randDir = South;
+                else            randDir = East;
+            } else if (fx == x+CELL_SIZE_X && fy == y) {
+                if (rand < 1.0) randDir = North;
+                else            randDir = South;
+            } else if (fx == x && fy == y+CELL_SIZE_Y){
+                if (rand < 1.0) randDir = North;
+                else            randDir = East;
             } else {
-                if (rand < 1.0) return new GridPoint(x, y-CELL_SIZE_Y);
-                else            return new GridPoint(CELL_SIZE_X, y);
+                GRID_LOG("error: wrong position");
             }
-        } else if (y == CELL_SIZE_Y*GRID_SIZE_Y) {
+        } else if (y == CELL_SIZE_Y*GRID_SIZE_Y) { // bottom edge
             rand = Math.random()*2;
-            if (fy < CELL_SIZE_Y*GRID_SIZE_Y) {
-                if (rand < 1.0) return new GridPoint(x-CELL_SIZE_X, y);
-                else            return new GridPoint(x+CELL_SIZE_X, y);
-            } else if (x > fx) {
-                if (rand < 1.0) return new GridPoint(x, y-CELL_SIZE_Y);
-                else            return new GridPoint(x+CELL_SIZE_X, y);
+            if        (fx == x && fy == y-CELL_SIZE_Y) {
+                if (rand < 1.0) randDir = West;
+                else            randDir = East;
+            } else if (fx == x-CELL_SIZE_X && fy == y) {
+                if (rand < 1.0) randDir = North;
+                else            randDir = East;
+            } else if (fx == x+CELL_SIZE_Y && fy == y){
+                if (rand < 1.0) randDir = North;
+                else            randDir = West;
             } else {
-                if (rand < 1.0) return new GridPoint(x, y-CELL_SIZE_Y);
-                else            return new GridPoint(x-CELL_SIZE_X, y);
+                GRID_LOG("error: wrong position");
             }
-        } else if (x == CELL_SIZE_X*GRID_SIZE_X) {
+        } else if (x == CELL_SIZE_X*GRID_SIZE_X) { // right edge
             rand = Math.random()*2;
-            if (fx < CELL_SIZE_X*GRID_SIZE_X) {
-                if (rand < 1.0) return new GridPoint(x, y-CELL_SIZE_Y);
-                else            return new GridPoint(x, y+CELL_SIZE_Y);
+            if (fx == x && fy == y-CELL_SIZE_Y) {
+                if (rand < 1.0) randDir = West;
+                else            randDir = South;
+            } else if (fx == x-CELL_SIZE_X && fy == y) {
+                if (rand < 1.0) randDir = North;
+                else            randDir = South;
+            } else if (fx == x && fy == y+CELL_SIZE_Y) {
+                if (rand < 1.0) randDir = North;
+                else            randDir = West;
+            } else {
+                GRID_LOG("error: wrong position");
             }
-        } else if (y == 0) {
+        } else if (y == 0) { // top edge
             rand = Math.random()*2;
-            if (fy > 0) {
-                if (rand < 1.0) return new GridPoint(x-CELL_SIZE_X, y);
-                else            return new GridPoint(x+CELL_SIZE_X, y);
+            if (fx == x-CELL_SIZE_X && fy == y) {
+                if (rand < 1.0) randDir = South;
+                else            randDir = East;
+            } else if (fx == x && fy == y+CELL_SIZE_Y) {
+                if (rand < 1.0) randDir = West;
+                else            randDir = East;
+            } else if (fx == x+CELL_SIZE_X && fy == y) {
+                if (rand < 1.0) randDir = West;
+                else            randDir = South;
+            } else {
+                GRID_LOG("error: wrong position");
             }
-        } else {
+        } else { // otherwise
             rand = Math.random()*3;
-            if (x == fx && y > fy) {
-                if      (rand < 1.0) return new GridPoint(x-CELL_SIZE_X, y);
-                else if (rand < 2.0) return new GridPoint(x, y+CELL_SIZE_Y);
-                else                 return new GridPoint(x+CELL_SIZE_X, y);
-            } else if (x > fx && y == fy) {
-                if (rand < 1.0)      return new GridPoint(x, y-CELL_SIZE_Y);
-                else if (rand < 2.0) return new GridPoint(x, y+CELL_SIZE_Y);
-                else                 return new GridPoint(x+CELL_SIZE_X, y);
-            } else if (x == fx && y < fy) {
-                if      (rand < 1.0) return new GridPoint(x, y-CELL_SIZE_Y);
-                else if (rand < 2.0) return new GridPoint(x-CELL_SIZE_X, y);
-                else                 return new GridPoint(x+CELL_SIZE_X, y);
-            } else if (x < fx && y == fy) {
-                if      (rand < 1.0) return new GridPoint(x, y-CELL_SIZE_Y);
-                else if (rand < 2.0) return new GridPoint(x-CELL_SIZE_X, y);
-                else                 return new GridPoint(x, y+CELL_SIZE_Y);
+            if (fx == x && fy == y-CELL_SIZE_Y) {
+                if      (rand < 1.0) randDir = West;
+                else if (rand < 2.0) randDir = South;
+                else                 randDir = East;
+            } else if (fx == x-CELL_SIZE_X && fy == y) {
+                if      (rand < 1.0) randDir = North;
+                else if (rand < 2.0) randDir = South;
+                else                 randDir = East;
+            } else if (fx == x && fy == y+CELL_SIZE_Y) {
+                if      (rand < 1.0) randDir = North;
+                else if (rand < 2.0) randDir = West;
+                else                 randDir = East;
+            } else if (fx == x+CELL_SIZE_X && fy == y) {
+                if      (rand < 1.0) randDir = North;
+                else if (rand < 2.0) randDir = West;
+                else                 randDir = South;
             } else {
-                GRID_LOG("error: getRandomPoint()");
+                GRID_LOG("error: wrong position");
             }
         }
-        return null;
+
+        switch(randDir) {
+            case North:
+                return new GridPoint(x, y-CELL_SIZE_Y);
+            case East:
+                return new GridPoint(x+CELL_SIZE_X, y);
+            case South:
+                return new GridPoint(x, y+CELL_SIZE_Y);
+            case West:
+                return new GridPoint(x-CELL_SIZE_X, y);
+            default:
+                GRID_LOG("error: getRandomPoint");
+                return null;
+        }
     }
 
     /**
@@ -335,9 +384,8 @@ public abstract class AbstractGridNode extends Node {
         HashMap<String, Object> reply = (HashMap<String, Object>) msg.getContent();
         if ((boolean) reply.get("avoid")) {
             avoid = true;
-        } else {
-            avoid = false;
         }
+
         acceptedLocks = Math.min(acceptedLocks, (int) reply.get("ok"));
         boolean removed = waitingFrom.remove(sender);
 
