@@ -27,7 +27,6 @@ public class GridNode extends AbstractGridNode {
 
             prev = dest;
             // when completing the task, the node is regarded as absence
-            // locking.remove(next);
             locking.clear();
             done = true;
 
@@ -51,19 +50,39 @@ public class GridNode extends AbstractGridNode {
         if (!done && waiting) {
             // when got replies from all the other nodes
             if (waitingFrom.isEmpty()) {
-
-                /* for debugging */
-                GRID_LOG("acceptedLocks=" + acceptedLocks);
-                /* end debugging */
-
-                for (int i = 0; i < acceptedLocks; i++) {
-                    if (requesting.isEmpty()) break;
-                    GridPoint point = requesting.remove();
-                    locking.add(point);
-                    numOfReq.remove(point);
+                if (conceding && acceptedLocks == 1) {
+                    numOfDeadlock = 0;
+                    path = pathGen.newPath(getID(), next, dest);
+                    avoid = false;
+                    conceding = false;
+                    setDirection(next);
+                    stay = false;
                 }
 
-                waiting = false;
+                if (avoid) {
+                    conceding = true;
+                    next = this.getRandomPoint(requesting.element());
+                    requesting.clear();
+                    numOfReq.clear();
+                    path.clear();
+                    path.add(next);
+                    sendRequest();
+                    waitingFrom = (ArrayList<Node>) this.getNeighbors();
+                    waiting = true;
+                } else {
+                    /* for debugging */
+                    GRID_LOG("acceptedLocks=" + acceptedLocks);
+                    /* end debugging */
+
+                    for (int i = 0; i < acceptedLocks; i++) {
+                        if (requesting.isEmpty()) break;
+                        GridPoint point = requesting.remove();
+                        locking.add(point);
+                        numOfReq.remove(point);
+                    }
+
+                    waiting = false;
+                }
             } else {
                 /* for debugging */
                 GRID_LOG("waitingFrom ", false);

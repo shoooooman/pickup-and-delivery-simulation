@@ -11,8 +11,7 @@ public class PathGenerator {
     /**
      * The first argument is for debugging
      */
-    public ArrayDeque<GridPoint> newPath(int id, Point cl) {
-        GridPoint dest = newDestination(cl);
+    public ArrayDeque<GridPoint> newPath(int id, Point cl, Point dest) {
         System.out.println("ID: " + id + " dest: " + dest);
         HashMap<String, Integer> dist = getManDist(dest, cl);
         locations = new ArrayDeque<GridPoint>();
@@ -28,7 +27,12 @@ public class PathGenerator {
         return locations;
     }
 
-    private GridPoint newDestination(Point start) {
+    public ArrayDeque<GridPoint> newPath(int id, Point cl) {
+        GridPoint dest = newDestination(cl);
+        return newPath(id, cl, dest);
+    }
+
+    public GridPoint newDestination(Point start) {
         Random rand = new Random();
         GridPoint dest = new GridPoint(rand.nextInt(GRID_SIZE_X)*CELL_SIZE_X, rand.nextInt(GRID_SIZE_Y)*CELL_SIZE_Y);
         return dest;

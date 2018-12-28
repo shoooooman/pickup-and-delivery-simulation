@@ -10,11 +10,15 @@ import static constant.ConstUser.*;
 
 public abstract class AbstractGridNode extends Node {
     static int id = 0;
+    protected PathGenerator pathGen = new PathGenerator();
     protected ArrayDeque<GridPoint> path;
     protected GridPoint next, prev, dest;
     protected boolean done = false;
     protected boolean stay = false;
     protected boolean waiting = false;
+    protected boolean avoid = false;
+    protected boolean conceding = false;
+    protected int numOfDeadlock = 0;
     protected ArrayDeque<GridPoint> requesting = new ArrayDeque<>();
     protected ArrayDeque<GridPoint> locking = new ArrayDeque<>();
     protected int acceptedLocks = MAX_LOCKS;
@@ -34,7 +38,6 @@ public abstract class AbstractGridNode extends Node {
     @Override
     public void onStart() {
         setID(id++);
-        PathGenerator pathGen = new PathGenerator();
         path = pathGen.newPath(getID(), this.getLocation());
         // when init point is the same as dest, path will be empty
         if (!path.isEmpty()) {
@@ -123,6 +126,94 @@ public abstract class AbstractGridNode extends Node {
         }
     }
 
+    public GridPoint getRandomPoint(GridPoint forbidden) {
+        double x = getX();
+        double y = getY();
+        double fx = forbidden.getX();
+        double fy = forbidden.getY();
+        GRID_LOG("getRandomPoint: (x,y)=" + getLocation() + ", (fx,fy)=" + forbidden);
+        double rand;
+        if (x == 0 && y == 0) {
+            if (fx == 0.0 && y == CELL_SIZE_Y)
+                return new GridPoint(CELL_SIZE_X, 0.0);
+            else
+                return new GridPoint(0.0, CELL_SIZE_Y);
+        } else if (x == 0 && y == CELL_SIZE_Y*GRID_SIZE_Y) {
+            if (fx == 0.0 && y == CELL_SIZE_Y*(GRID_SIZE_Y-1))
+                return new GridPoint(CELL_SIZE_X, CELL_SIZE_Y*GRID_SIZE_Y);
+            else
+                return new GridPoint(0.0, CELL_SIZE_Y*(GRID_SIZE_Y-1));
+        } else if (x == CELL_SIZE_X*GRID_SIZE_X && y == CELL_SIZE_Y*GRID_SIZE_Y) {
+            if (fx == CELL_SIZE_X*GRID_SIZE_X && y == CELL_SIZE_Y*(GRID_SIZE_Y-1))
+                return new GridPoint(CELL_SIZE_X*(GRID_SIZE_X-1), CELL_SIZE_Y*GRID_SIZE_Y);
+            else
+                return new GridPoint(CELL_SIZE_X*GRID_SIZE_X, CELL_SIZE_Y*(GRID_SIZE_Y-1));
+        } else if (x == CELL_SIZE_X*GRID_SIZE_X && y == 0.0) {
+            if (fx == CELL_SIZE_X*CELL_SIZE_X && y == CELL_SIZE_Y)
+                return new GridPoint(CELL_SIZE_X*(GRID_SIZE_X-1), 0.0);
+            else
+                return new GridPoint(CELL_SIZE_X*GRID_SIZE_X, CELL_SIZE_Y);
+        } else if (x == 0) {
+            rand = Math.random()*2;
+            if (fx > 0) {
+                if (rand < 1.0) return new GridPoint(x, y-CELL_SIZE_Y);
+                else            return new GridPoint(x, y+CELL_SIZE_Y);
+            } else if (y > fy) {
+                if (rand < 1.0) return new GridPoint(x, y+CELL_SIZE_Y);
+                else            return new GridPoint(CELL_SIZE_X, y);
+            } else {
+                if (rand < 1.0) return new GridPoint(x, y-CELL_SIZE_Y);
+                else            return new GridPoint(CELL_SIZE_X, y);
+            }
+        } else if (y == CELL_SIZE_Y*GRID_SIZE_Y) {
+            rand = Math.random()*2;
+            if (fy < CELL_SIZE_Y*GRID_SIZE_Y) {
+                if (rand < 1.0) return new GridPoint(x-CELL_SIZE_X, y);
+                else            return new GridPoint(x+CELL_SIZE_X, y);
+            } else if (x > fx) {
+                if (rand < 1.0) return new GridPoint(x, y-CELL_SIZE_Y);
+                else            return new GridPoint(x+CELL_SIZE_X, y);
+            } else {
+                if (rand < 1.0) return new GridPoint(x, y-CELL_SIZE_Y);
+                else            return new GridPoint(x-CELL_SIZE_X, y);
+            }
+        } else if (x == CELL_SIZE_X*GRID_SIZE_X) {
+            rand = Math.random()*2;
+            if (fx < CELL_SIZE_X*GRID_SIZE_X) {
+                if (rand < 1.0) return new GridPoint(x, y-CELL_SIZE_Y);
+                else            return new GridPoint(x, y+CELL_SIZE_Y);
+            }
+        } else if (y == 0) {
+            rand = Math.random()*2;
+            if (fy > 0) {
+                if (rand < 1.0) return new GridPoint(x-CELL_SIZE_X, y);
+                else            return new GridPoint(x+CELL_SIZE_X, y);
+            }
+        } else {
+            rand = Math.random()*3;
+            if (x == fx && y > fy) {
+                if      (rand < 1.0) return new GridPoint(x-CELL_SIZE_X, y);
+                else if (rand < 2.0) return new GridPoint(x, y+CELL_SIZE_Y);
+                else                 return new GridPoint(x+CELL_SIZE_X, y);
+            } else if (x > fx && y == fy) {
+                if (rand < 1.0)      return new GridPoint(x, y-CELL_SIZE_Y);
+                else if (rand < 2.0) return new GridPoint(x, y+CELL_SIZE_Y);
+                else                 return new GridPoint(x+CELL_SIZE_X, y);
+            } else if (x == fx && y < fy) {
+                if      (rand < 1.0) return new GridPoint(x, y-CELL_SIZE_Y);
+                else if (rand < 2.0) return new GridPoint(x-CELL_SIZE_X, y);
+                else                 return new GridPoint(x+CELL_SIZE_X, y);
+            } else if (x < fx && y == fy) {
+                if      (rand < 1.0) return new GridPoint(x, y-CELL_SIZE_Y);
+                else if (rand < 2.0) return new GridPoint(x-CELL_SIZE_X, y);
+                else                 return new GridPoint(x, y+CELL_SIZE_Y);
+            } else {
+                GRID_LOG("error: getRandomPoint()");
+            }
+        }
+        return null;
+    }
+
     /**
      * Update a requesting point list with path
      * then send a request message to all the other nodes
@@ -152,13 +243,24 @@ public abstract class AbstractGridNode extends Node {
         sendAll(msg);
     }
 
+    private boolean checkDeadlock(GridPoint senderFirstNode, GridPoint senderLocation) {
+        GridPoint receiverFirstNode = requesting.peek();
+        if (senderFirstNode == null || receiverFirstNode == null)
+            return false;
+
+        if (receiverFirstNode.equals(senderLocation) && getLocation().equals(senderFirstNode))
+            return true;
+        else
+            return false;
+    }
+
     /**
      * Called when receiving a message with topic "request"
      * then caliculates the priorities for all requesting points
      * send back a maximum number which this node can accept to be locked from sender
      */
     protected void receiveRequest(Message msg) {
-        Node sender = msg.getSender();
+        AbstractGridNode sender = (AbstractGridNode) msg.getSender();
 
         /* for debugging */
         GRID_LOG("received request from " + sender.getID());
@@ -175,6 +277,31 @@ public abstract class AbstractGridNode extends Node {
         HashMap<String, Object> content = new HashMap<>();
         content.put("topic", "reply");
 
+        boolean deadlock = checkDeadlock(locations.peek(), sender.getLocation());
+        if (deadlock) {
+            GRID_LOG("deadlock!");
+            if (numOfDeadlock < sender.getNumOfDeadlock()) {
+                avoid = true;
+                numOfDeadlock++;
+            } else if (numOfDeadlock == sender.getNumOfDeadlock()) {
+                if (getID() > sender.getID()) {
+                    GRID_LOG("decided by ID");
+                    avoid = true;
+                    numOfDeadlock++;
+                } else {
+                    avoid = false;
+                    sender.incNumOfDeadlock();
+                }
+            } else {
+                avoid = false;
+                sender.incNumOfDeadlock();
+            }
+            content.put("ok", 0);
+            content.put("avoid", !avoid); // if avoid is false, the sender should avoid
+            send(sender, new Message(content));
+            return;
+        }
+
         boolean priority; // for this node
         int accepted = 0;
         Priority judge = new Priority(pLrd, pDisToCs, pNumOfReq);
@@ -188,6 +315,7 @@ public abstract class AbstractGridNode extends Node {
             }
         }
         content.put("ok", accepted);
+        content.put("avoid", false);
         send(sender, new Message(content));
     }
 
@@ -205,7 +333,12 @@ public abstract class AbstractGridNode extends Node {
 
         @SuppressWarnings("unchecked")
         HashMap<String, Object> reply = (HashMap<String, Object>) msg.getContent();
-        acceptedLocks = Math.min(acceptedLocks, (int)reply.get("ok"));
+        if ((boolean) reply.get("avoid")) {
+            avoid = true;
+        } else {
+            avoid = false;
+        }
+        acceptedLocks = Math.min(acceptedLocks, (int) reply.get("ok"));
         boolean removed = waitingFrom.remove(sender);
 
         /* for debugging */
@@ -256,6 +389,18 @@ public abstract class AbstractGridNode extends Node {
 
     public boolean isStay() {
         return stay;
+    }
+
+    public boolean isAvoid() {
+        return avoid;
+    }
+
+    public int getNumOfDeadlock() {
+        return numOfDeadlock;
+    }
+
+    public int incNumOfDeadlock() {
+        return ++numOfDeadlock;
     }
 
     public void setPLrd(boolean priority) {
