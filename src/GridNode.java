@@ -14,42 +14,19 @@ public class GridNode extends AbstractGridNode {
     public void onClock() {
         if (conceding)
             this.setColor(Color.gray);
-        else if (done)
-            this.setColor(Color.green);
         else
             this.setColor(Color.blue);
 
         GridPoint here = this.getLocation();
 
-        // when reaching the destination
-        if (!done && here.equals(dest)) {
-            /* for debugging */
-            GRID_LOG("complete!");
-            /* end debugging */
-
-            prev = dest;
-            // when completing the task, the node is regarded as absence
-            locking.clear();
-            done = true;
-
-            // this.setColor(Color.green);
-            // // done = false;
-            // PathGenerator pathGen = new PathGenerator();
-            // path = pathGen.newPath(this, this.getLocation());
-            // if (!path.isEmpty()) {
-            //     dest = path.getLast();
-            // } else {
-            //     dest = getLocation();
-            // }
-        }
-
-        if (!done && waiting) {
+        if (waiting) {
             // when got replies from all the other nodes
             if (waitingFrom.isEmpty()) {
                 // when this node must concede
                 // find direction to evacuate and send request
                 if (avoid) {
                     assert(acceptedLocks == 0);
+                    numOfAvoid++;
                     avoid = false;
                     conceding = true;
                     next = this.getRandomPoint(requesting.element());
@@ -62,10 +39,8 @@ public class GridNode extends AbstractGridNode {
 
                 // when the node for evacuation is accepted
                 if (conceding && acceptedLocks == 1) {
-                    numOfDeadlock = 0;
-                    // get path from evacuation node to destination
-                    path = pathGen.newPath(getID(), next, dest);
-                    conceding = false;
+                    numOfAvoid = 0;
+                    // start moving to the evacuation point
                     stay = false;
                 }
 
@@ -80,6 +55,14 @@ public class GridNode extends AbstractGridNode {
                     numOfReq.remove(point);
                 }
 
+                /* for debugging */
+                GRID_LOG("locking ", false);
+                for (GridPoint p : locking) {
+                    System.out.print(p);
+                }
+                System.out.println();
+                /* end debugging */
+
                 waiting = false;
             } else {
                 /* for debugging */
@@ -91,7 +74,7 @@ public class GridNode extends AbstractGridNode {
             }
         }
 
-        if (!done && !waiting) {
+        if (!waiting) {
             acceptedLocks = MAX_LOCKS;
             sendRequest();
             waitingFrom = (ArrayList<Node>) this.getNeighbors();
@@ -99,8 +82,7 @@ public class GridNode extends AbstractGridNode {
         }
 
         // when arriving at a grid point
-        if (!done && here.equals(next)) {
-            this.setColor(Color.red);
+        if (here.equals(next)) {
 
             /* for debugging */
             GRID_LOG(here);
@@ -111,7 +93,33 @@ public class GridNode extends AbstractGridNode {
             System.out.println();
             /* end debugging */
 
-            // when staying prev can equal next
+            // when reach evacuation point
+            if (conceding) {
+                // get path from the evacuation point to the original destination
+                path = pathGen.newPath(getID(), next, dest);
+                conceding = false;
+            }
+
+            // when reaching the destination
+            if (here.equals(dest)) {
+                /* for debugging */
+                GRID_LOG("complete!");
+                /* end debugging */
+
+                this.setColor(Color.green);
+
+                path = pathGen.newPath(getID(), this.getLocation());
+                if (!path.isEmpty()) {
+                    dest = path.getLast();
+                } else {
+                    dest = getLocation();
+                }
+            } else {
+                this.setColor(Color.red);
+            }
+
+            // when not staying
+            // (prev can equal next when staying)
             if (!here.equals(prev)) {
                 assert(!prev.equals(next));
 

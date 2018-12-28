@@ -11,14 +11,14 @@ import static constant.ConstUser.*;
 public abstract class AbstractGridNode extends Node {
     static int id = 0;
     protected PathGenerator pathGen = new PathGenerator();
-    protected ArrayDeque<GridPoint> path;
+    protected ArrayDeque<GridPoint> path = new ArrayDeque<>();
     protected GridPoint next, prev, dest;
     protected boolean done = false;
     protected boolean stay = false;
     protected boolean waiting = false;
     protected boolean avoid = false;
     protected boolean conceding = false;
-    protected int numOfDeadlock = 0;
+    protected int numOfAvoid = 0;
     protected ArrayDeque<GridPoint> requesting = new ArrayDeque<>();
     protected ArrayDeque<GridPoint> locking = new ArrayDeque<>();
     protected int acceptedLocks = MAX_LOCKS;
@@ -286,9 +286,14 @@ public abstract class AbstractGridNode extends Node {
         content.put("locations", requesting.clone());
         content.put("lrd", lrd);
         content.put("numOfReq", numOfReq);
+        content.put("numOfAvoid", numOfAvoid);
         Object obj = (Object) content;
         Message msg = new Message(content);
-        GRID_LOG("sending request");
+        GRID_LOG("seding request for: ", false);
+        for (GridPoint point : requesting) {
+            System.out.print(point + " ");
+        }
+        System.out.println();
         sendAll(msg);
     }
 
@@ -312,7 +317,7 @@ public abstract class AbstractGridNode extends Node {
         AbstractGridNode sender = (AbstractGridNode) msg.getSender();
 
         /* for debugging */
-        GRID_LOG("received request from " + sender.getID());
+        // GRID_LOG("received request from " + sender.getID());
         /* end debugging */
 
         @SuppressWarnings("unchecked")
@@ -322,28 +327,29 @@ public abstract class AbstractGridNode extends Node {
         @SuppressWarnings("unchecked")
         int senderLrd = (int) request.get("lrd");
         clk = Math.max(clk, senderLrd);
+        @SuppressWarnings("unchecked")
+        int senderNumOfAvoid = (int) request.get("numOfAvoid");
 
         HashMap<String, Object> content = new HashMap<>();
         content.put("topic", "reply");
 
         boolean deadlock = checkDeadlock(locations.peek(), sender.getLocation());
         if (deadlock) {
-            GRID_LOG("deadlock!");
-            if (numOfDeadlock < sender.getNumOfDeadlock()) {
+            GRID_LOG("deadlock with " + sender.getID());
+            if (numOfAvoid < senderNumOfAvoid) {
+                GRID_LOG("avoid by numOfAvoid");
                 avoid = true;
-                numOfDeadlock++;
-            } else if (numOfDeadlock == sender.getNumOfDeadlock()) {
+            } else if (numOfAvoid == senderNumOfAvoid) {
                 if (getID() > sender.getID()) {
-                    GRID_LOG("decided by ID");
+                    GRID_LOG("avoid by ID");
                     avoid = true;
-                    numOfDeadlock++;
                 } else {
+                    GRID_LOG("not avoid by ID");
                     avoid = false;
-                    sender.incNumOfDeadlock();
                 }
             } else {
+                GRID_LOG("not avoid by numOfAvoid");
                 avoid = false;
-                sender.incNumOfDeadlock();
             }
             content.put("ok", 0);
             content.put("avoid", !avoid); // if avoid is false, the sender should avoid
@@ -418,6 +424,10 @@ public abstract class AbstractGridNode extends Node {
         return numOfReq;
     }
 
+    public ArrayDeque<GridPoint> getPath() {
+        return path;
+    }
+
     public ArrayDeque<GridPoint> getLocking() {
         return locking;
         // return new ArrayDeque<GridPoint>(locking); // shallow copy
@@ -425,10 +435,6 @@ public abstract class AbstractGridNode extends Node {
 
     public ArrayDeque<GridPoint> getRequesting() {
         return requesting;
-    }
-
-    public boolean isDone() {
-        return done;
     }
 
     public boolean isWaiting() {
@@ -443,12 +449,8 @@ public abstract class AbstractGridNode extends Node {
         return avoid;
     }
 
-    public int getNumOfDeadlock() {
-        return numOfDeadlock;
-    }
-
-    public int incNumOfDeadlock() {
-        return ++numOfDeadlock;
+    public int getNumOfAvoid() {
+        return numOfAvoid;
     }
 
     public void setPLrd(boolean priority) {

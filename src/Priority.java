@@ -18,7 +18,7 @@ public class Priority {
         this.pNumOfReq = pNumOfReq;
     }
 
-    public boolean getPriority(AbstractGridNode receiver, AbstractGridNode sender, Message request, GridPoint dest) {
+    public boolean getPriority(AbstractGridNode receiver, AbstractGridNode sender, Message request, GridPoint requestPoint) {
         assert(sender == request.getSender());
 
         @SuppressWarnings("unchecked")
@@ -27,25 +27,23 @@ public class Priority {
         int lrdR = receiver.getLrd();
         int lrdS = (int) requestContent.get("lrd");
 
-        int disCsR = receiver.getLocation().calcManDist(dest);
-        int disCsS = sender.getLocation().calcManDist(dest);
+        int disCsR = receiver.getLocation().calcManDist(requestPoint);
+        int disCsS = sender.getLocation().calcManDist(requestPoint);
 
         int idR = receiver.getID();
         int idS = sender.getID();
 
-        int norqR = receiver.getNumOfReq().getOrDefault(dest, 0); // return 0 if the value is null
-        int norqS = sender.getNumOfReq().getOrDefault(dest, 0);
+        int norqR = receiver.getNumOfReq().getOrDefault(requestPoint, 0); // return 0 if the value is null
+        int norqS = sender.getNumOfReq().getOrDefault(requestPoint, 0);
 
         GridPoint currentCoords = receiver.getLocation();
         GridPoint previousCoords = receiver.getPrev();
 
-        if        (!receiver.isDone() && currentCoords.equals(dest)) {
+        if        (currentCoords.equals(requestPoint)) {
             return true;
-        } else if (!receiver.isDone() && previousCoords.equals(dest)) {
+        } else if (receiver.getLocking().contains(requestPoint)) {
             return true;
-        } else if (receiver.getLocking().contains(dest)) {
-            return true;
-        } else if (!receiver.getRequesting().contains(dest)) {
+        } else if (!receiver.getRequesting().contains(requestPoint)) {
             return false;
         } else {
             if        (pLrd && lrdR < lrdS) {
