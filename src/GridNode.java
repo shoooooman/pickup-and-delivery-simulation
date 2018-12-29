@@ -10,6 +10,7 @@ import static constant.ConstEnvironment.*;
 import static constant.ConstUser.*;
 
 public class GridNode extends AbstractGridNode {
+    GridPoint evacuationPoint;
     @Override
     public void onClock() {
         if (conceding)
@@ -22,26 +23,10 @@ public class GridNode extends AbstractGridNode {
         if (waiting) {
             // when got replies from all the other nodes
             if (waitingFrom.isEmpty()) {
-                // when this node must concede
-                // find direction to evacuate and send request
-                if (avoid) {
-                    assert(acceptedLocks == 0);
-                    numOfAvoid++;
-                    avoid = false;
-                    conceding = true;
-                    next = this.getRandomPoint(requesting.element());
-                    setDirection(next);
-                    requesting.clear();
-                    numOfReq.clear();
-                    path.clear();
-                    path.add(next);
-                }
 
                 // when the node for evacuation is accepted
-                if (conceding && acceptedLocks == 1) {
+                if (conceding) {
                     numOfAvoid = 0;
-                    // start moving to the evacuation point
-                    stay = false;
                 }
 
                 /* for debugging */
@@ -74,13 +59,6 @@ public class GridNode extends AbstractGridNode {
             }
         }
 
-        if (!waiting) {
-            acceptedLocks = MAX_LOCKS;
-            sendRequest();
-            waitingFrom = (ArrayList<Node>) this.getNeighbors();
-            waiting = true; // wait for replies from all the other nodes
-        }
-
         // when arriving at a grid point
         if (here.equals(next)) {
 
@@ -94,9 +72,9 @@ public class GridNode extends AbstractGridNode {
             /* end debugging */
 
             // when reach evacuation point
-            if (conceding) {
+            if (conceding && here.equals(evacuationPoint)) {
                 // get path from the evacuation point to the original destination
-                path = pathGen.newPath(getID(), next, dest);
+                path = pathGen.newPath(getID(), evacuationPoint, dest);
                 conceding = false;
             }
 
@@ -114,7 +92,7 @@ public class GridNode extends AbstractGridNode {
                 } else {
                     dest = getLocation();
                 }
-            } else {
+            } else if (!conceding) {
                 this.setColor(Color.red);
             }
 
@@ -142,16 +120,80 @@ public class GridNode extends AbstractGridNode {
                 setDirection(next);
             } else {
                 // when can get no locks other than current point
+                assert(locking.size() == 1);
 
                 /* for debugging */
                 // GRID_LOG("staying");
                 /* end debugging */
+
+                // when got replies from all the other nodes
+                if (!waiting) {
+                    assert(waitingFrom.isEmpty());
+                    // boolean deadlock = checkDeadlock(locations.peek(), sender.getLocation());
+                    // boolean deadlock = checkDeadlock(sender, locations);
+                    boolean deadlock;
+                    AbstractGridNode another = getNeighborByLocation(requesting.peek());
+                    if (another == null)
+                        deadlock = false;
+                    else
+                        // deadlock = checkDeadlock();
+                        deadlock = checkDeadlock(another);
+                    // when the another node calculated deadlock and this node must avoid,
+                    // this node do not have to calculate if deadlock is occur one more time
+                    if (!avoid && deadlock) {
+                        // another means the node next to this node
+                        GRID_LOG("deadlock with " + another.getID());
+                        if (numOfAvoid < another.getNumOfAvoid()) {
+                            GRID_LOG("avoid by numOfAvoid");
+                            avoid = true;
+                            another.setAvoid(false);
+                        } else if (numOfAvoid == another.getNumOfAvoid()) {
+                            if (getID() > another.getID()) {
+                                GRID_LOG("avoid by ID");
+                                avoid = true;
+                                another.setAvoid(false);
+                            } else {
+                                GRID_LOG("not avoid by ID");
+                                avoid = false;
+                                another.setAvoid(true);
+                            }
+                        } else {
+                            GRID_LOG("not avoid by numOfAvoid");
+                            avoid = false;
+                            another.setAvoid(true);
+                        }
+                    }
+
+                    // when this node must concede
+                    // find direction to evacuate and set it to path
+                    if (avoid) {
+                        assert(acceptedLocks == 0);
+                        GRID_LOG("avoiding");
+                        numOfAvoid++;
+                        avoid = false;
+                        conceding = true;
+                        evacuationPoint = this.getRandomPoint(requesting.element());
+                        setDirection(evacuationPoint);
+                        requesting.clear();
+                        numOfReq.clear();
+                        path.clear();
+                        path.add(evacuationPoint);
+                    }
+                }
 
                 if (!requesting.isEmpty())
                     setDirection(requesting.element());
 
                 stay = true;
             }
+        }
+
+        // when have node(s) to request
+        if (!waiting && (!requesting.isEmpty() || !path.isEmpty())) {
+            acceptedLocks = MAX_LOCKS;
+            sendRequest();
+            waitingFrom = (ArrayList<Node>) this.getNeighbors();
+            waiting = true; // wait for replies from all the other nodes
         }
     }
 }

@@ -297,12 +297,89 @@ public abstract class AbstractGridNode extends Node {
         sendAll(msg);
     }
 
-    private boolean checkDeadlock(GridPoint senderFirstNode, GridPoint senderLocation) {
-        GridPoint receiverFirstNode = requesting.peek();
-        if (senderFirstNode == null || receiverFirstNode == null)
+    public AbstractGridNode getNeighborByLocation(GridPoint location) {
+        ArrayList<Node> nodes = (ArrayList<Node>) this.getNeighbors();
+        for (Node node : nodes) {
+            AbstractGridNode gnode = (AbstractGridNode) node;
+            if (gnode.isOnGridPoint() && gnode.getLocation().equals(location))
+                return gnode;
+        }
+        return null;
+    }
+
+    /**
+     * Detect deadlock(circle)
+     * checking starts with this node and the next node
+     */
+    protected boolean checkDeadlock(AbstractGridNode another) {
+        assert(another.isOnGridPoint());
+
+        // check first the relationship between this node and the another node
+        GridPoint thisFirstReqPoint = requesting.peek();
+        GridPoint anotherFirstReqPoint = another.getRequesting().peek();
+        if (thisFirstReqPoint == null || anotherFirstReqPoint == null)
             return false;
 
-        if (receiverFirstNode.equals(senderLocation) && getLocation().equals(senderFirstNode))
+        if (thisFirstReqPoint.equals(another.getLocation()) && getLocation().equals(anotherFirstReqPoint))
+            return true;
+
+        // check next the relationship starting with the another node
+        // and check whether circle is exist recursively
+        GridPoint firstPoint = anotherFirstReqPoint;
+        AbstractGridNode nodeOnFirstNode = another;
+        ArrayList<AbstractGridNode> checkedNodes = new ArrayList<>();
+        while (true) {
+            // tmp for debugging
+            AbstractGridNode tmp = nodeOnFirstNode;
+            nodeOnFirstNode = nodeOnFirstNode.getNeighborByLocation(firstPoint);
+            if (nodeOnFirstNode != null) {
+                GRID_LOG("checking deadlock between " + tmp.getID() + " and " + nodeOnFirstNode.getID());
+                assert(nodeOnFirstNode.isOnGridPoint());
+
+            }
+
+            if (nodeOnFirstNode == null) {
+                // when there is no node next to previous nodeOnFirstNode
+                GRID_LOG("ID: " + tmp.getID() + " can move next requesting point");
+                return false;
+            } else if (!nodeOnFirstNode.isStay()) {
+                return false;
+            } else if (nodeOnFirstNode.getID() == this.getID()) {
+                GRID_LOG("Detect deadlock with" + tmp.getID());
+                return true;
+            } else if (checkedNodes.contains(nodeOnFirstNode)) {
+                // although circle(deadlock) is exist,
+                // nodeOnFirstNode is not part of it
+                GRID_LOG("This node is not included in a circle");
+                return false;
+            } else {
+                firstPoint = nodeOnFirstNode.getRequesting().peek();
+                if (firstPoint == null) {
+                    GRID_LOG("ID: " + nodeOnFirstNode.getID() + " has no firstPoint");
+                    return false;
+                }
+                checkedNodes.add(nodeOnFirstNode);
+            }
+        }
+    }
+
+    /**
+     * Detect only intersection (to be removed)
+     */
+    protected boolean checkDeadlock() {
+        GridPoint thisFirstReqPoint = requesting.peek();
+        if (thisFirstReqPoint == null)
+            return false;
+
+        AbstractGridNode another = getNeighborByLocation(thisFirstReqPoint);
+        if (another == null)
+            return false;
+
+        GridPoint anotherFirstReqPoint = another.getRequesting().peek();
+        if (anotherFirstReqPoint == null)
+            return false;
+
+        if (thisFirstReqPoint.equals(another.getLocation()) && getLocation().equals(anotherFirstReqPoint))
             return true;
         else
             return false;
@@ -333,30 +410,6 @@ public abstract class AbstractGridNode extends Node {
         HashMap<String, Object> content = new HashMap<>();
         content.put("topic", "reply");
 
-        boolean deadlock = checkDeadlock(locations.peek(), sender.getLocation());
-        if (deadlock) {
-            GRID_LOG("deadlock with " + sender.getID());
-            if (numOfAvoid < senderNumOfAvoid) {
-                GRID_LOG("avoid by numOfAvoid");
-                avoid = true;
-            } else if (numOfAvoid == senderNumOfAvoid) {
-                if (getID() > sender.getID()) {
-                    GRID_LOG("avoid by ID");
-                    avoid = true;
-                } else {
-                    GRID_LOG("not avoid by ID");
-                    avoid = false;
-                }
-            } else {
-                GRID_LOG("not avoid by numOfAvoid");
-                avoid = false;
-            }
-            content.put("ok", 0);
-            content.put("avoid", !avoid); // if avoid is false, the sender should avoid
-            send(sender, new Message(content));
-            return;
-        }
-
         boolean priority; // for this node
         int accepted = 0;
         Priority judge = new Priority(pLrd, pDisToCs, pNumOfReq);
@@ -370,7 +423,6 @@ public abstract class AbstractGridNode extends Node {
             }
         }
         content.put("ok", accepted);
-        content.put("avoid", false);
         send(sender, new Message(content));
     }
 
@@ -388,9 +440,6 @@ public abstract class AbstractGridNode extends Node {
 
         @SuppressWarnings("unchecked")
         HashMap<String, Object> reply = (HashMap<String, Object>) msg.getContent();
-        if ((boolean) reply.get("avoid")) {
-            avoid = true;
-        }
 
         acceptedLocks = Math.min(acceptedLocks, (int) reply.get("ok"));
         boolean removed = waitingFrom.remove(sender);
@@ -449,6 +498,10 @@ public abstract class AbstractGridNode extends Node {
         return avoid;
     }
 
+    public void setAvoid(boolean avoid) {
+        this.avoid = avoid;
+    }
+
     public int getNumOfAvoid() {
         return numOfAvoid;
     }
@@ -468,7 +521,10 @@ public abstract class AbstractGridNode extends Node {
     public boolean isOnGridPoint() {
         double x = getX();
         double y = getY();
-        if (x % CELL_SIZE_X == 0 && y % CELL_SIZE_Y == 0)
+        // double xmod = x % (double)CELL_SIZE_X;
+        // double ymod = y % (double)CELL_SIZE_Y;
+        // GRID_LOG("isOnGridPoint: (xmod,ymod)=" + "(" + xmod + "," + ymod + ")");
+        if (x % (double)CELL_SIZE_X == 0.0 && y % (double)CELL_SIZE_Y == 0.0)
             return true;
         else
             return false;
