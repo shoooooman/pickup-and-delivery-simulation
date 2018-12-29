@@ -289,7 +289,7 @@ public abstract class AbstractGridNode extends Node {
         content.put("numOfAvoid", numOfAvoid);
         Object obj = (Object) content;
         Message msg = new Message(content);
-        GRID_LOG("seding request for: ", false);
+        GRID_LOG("sending request for: ", false);
         for (GridPoint point : requesting) {
             System.out.print(point + " ");
         }
@@ -383,7 +383,7 @@ public abstract class AbstractGridNode extends Node {
         Node sender = msg.getSender();
 
         /* for debugging */
-        GRID_LOG("received reply from " + sender.getID());
+        // GRID_LOG("received reply from " + sender.getID());
         /* end debugging */
 
         @SuppressWarnings("unchecked")
@@ -396,10 +396,10 @@ public abstract class AbstractGridNode extends Node {
         boolean removed = waitingFrom.remove(sender);
 
         /* for debugging */
-        if (removed)
-            GRID_LOG("removed " + sender.getID());
-        else
-            GRID_LOG("remove failed");
+        // if (removed)
+        //     GRID_LOG("removed " + sender.getID());
+        // else
+        //     GRID_LOG("remove failed");
         /* end debugging */
 
     }

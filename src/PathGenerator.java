@@ -27,6 +27,31 @@ public class PathGenerator {
         return locations;
     }
 
+    public ArrayDeque<GridPoint> newPath(int id, Point cl, ArrayDeque<GridPoint> part, Point dest) {
+        System.out.println("ID: " + id + " dest: " + dest);
+        HashMap<String, Integer> dist = getManDist(dest, cl);
+        locations = new ArrayDeque<GridPoint>();
+
+        while (!part.isEmpty()) {
+            locations.add(part.remove());
+        }
+
+        GridPoint next;
+        if (!locations.isEmpty()) {
+            next = locations.getLast();
+        } else {
+            next = new GridPoint(cl.getX(), cl.getY());
+        }
+        while(true) {
+            next = getNextLocation(next, dist);
+            if (next == null) break;
+            System.out.println("ID: " + id + " path: " + next);
+            locations.add(next);
+        }
+        return locations;
+
+    }
+
     public ArrayDeque<GridPoint> newPath(int id, Point cl) {
         GridPoint dest = newDestination(cl);
         return newPath(id, cl, dest);

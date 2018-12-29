@@ -47,23 +47,31 @@ public class Priority {
             return false;
         } else {
             if        (pLrd && lrdR < lrdS) {
+                System.out.println("lrd: ID " + receiver.getID() + "(" + lrdR + ")" + " < ID " + sender.getID() + "(" + lrdS + ")");
                 return true;
             } else if (pLrd && lrdR > lrdS) {
+                System.out.println("lrd: ID " + sender.getID() + "(" + lrdS + ")" + " < ID " + receiver.getID() + "(" + lrdR + ")");
                 return false;
             } else {
                 if        (pDisToCs && disCsR < disCsS) {
+                    System.out.println("dis: ID " + receiver.getID() + "(" + disCsR + ")" + " < ID " + sender.getID() + "(" + disCsS + ")");
                     return true;
                 } else if (pDisToCs && disCsR > disCsS) {
+                    System.out.println("dis: ID " + sender.getID() + "(" + disCsS + ")" + " < ID " + receiver.getID() + "(" + disCsR + ")");
                     return false;
                 } else {
                     if        (pNumOfReq && norqR > norqS) {
+                        System.out.println("nor: ID " + receiver.getID() + "(" + norqR + ")" + " > ID " + sender.getID() + "(" + norqS + ")");
                         return true;
                     } else if (pNumOfReq && norqR < norqS) {
+                        System.out.println("nor: ID " + sender.getID() + "(" + norqS + ")" + " > ID " + receiver.getID() + "(" + norqR + ")");
                         return false;
                     } else {
                         if (idR < idS) {
+                            System.out.println("id: ID " + receiver.getID() +  " < ID " + sender.getID());
                             return true;
                         } else {
+                            System.out.println("id: ID " + sender.getID() +  " < ID " + receiver.getID());
                             return false;
                         }
                     }

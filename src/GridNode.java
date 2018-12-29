@@ -66,10 +66,10 @@ public class GridNode extends AbstractGridNode {
                 waiting = false;
             } else {
                 /* for debugging */
-                GRID_LOG("waitingFrom ", false);
-                for (Node node : waitingFrom)
-                    System.out.print(node.getID() + " ");
-                System.out.println();
+                // GRID_LOG("waitingFrom ", false);
+                // for (Node node : waitingFrom)
+                //     System.out.print(node.getID() + " ");
+                // System.out.println();
                 /* end debugging */
             }
         }
@@ -125,8 +125,8 @@ public class GridNode extends AbstractGridNode {
 
                 boolean released = locking.remove(prev);
                 /* for debugging */
-                if (released)
-                    GRID_LOG("released " + prev);
+                // if (released)
+                //     GRID_LOG("released " + prev);
                 /* end debugging */
 
                 prev = next;
@@ -144,7 +144,7 @@ public class GridNode extends AbstractGridNode {
                 // when can get no locks other than current point
 
                 /* for debugging */
-                GRID_LOG("staying");
+                // GRID_LOG("staying");
                 /* end debugging */
 
                 if (!requesting.isEmpty())
