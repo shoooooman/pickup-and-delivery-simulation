@@ -172,6 +172,7 @@ public class GridNode extends AbstractGridNode {
                         numOfAvoid++;
                         avoid = false;
                         conceding = true;
+                        this.setColor(Color.gray);
                         evacuationPoint = this.getRandomPoint(requesting.element());
                         setDirection(evacuationPoint);
                         requesting.clear();

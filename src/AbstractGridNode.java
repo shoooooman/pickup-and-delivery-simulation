@@ -286,7 +286,6 @@ public abstract class AbstractGridNode extends Node {
         content.put("locations", requesting.clone());
         content.put("lrd", lrd);
         content.put("numOfReq", numOfReq);
-        content.put("numOfAvoid", numOfAvoid);
         Object obj = (Object) content;
         Message msg = new Message(content);
         GRID_LOG("sending request for: ", false);
@@ -324,10 +323,11 @@ public abstract class AbstractGridNode extends Node {
             return true;
 
         // check next the relationship starting with the another node
-        // and check whether circle is exist recursively
+        // and check whether circle exists recursively
         GridPoint firstPoint = anotherFirstReqPoint;
         AbstractGridNode nodeOnFirstNode = another;
         ArrayList<AbstractGridNode> checkedNodes = new ArrayList<>();
+        checkedNodes.add(another);
         while (true) {
             // tmp for debugging
             AbstractGridNode tmp = nodeOnFirstNode;
@@ -348,7 +348,7 @@ public abstract class AbstractGridNode extends Node {
                 GRID_LOG("Detect deadlock with" + tmp.getID());
                 return true;
             } else if (checkedNodes.contains(nodeOnFirstNode)) {
-                // although circle(deadlock) is exist,
+                // although circle(deadlock) exists,
                 // nodeOnFirstNode is not part of it
                 GRID_LOG("This node is not included in a circle");
                 return false;
@@ -404,8 +404,6 @@ public abstract class AbstractGridNode extends Node {
         @SuppressWarnings("unchecked")
         int senderLrd = (int) request.get("lrd");
         clk = Math.max(clk, senderLrd);
-        @SuppressWarnings("unchecked")
-        int senderNumOfAvoid = (int) request.get("numOfAvoid");
 
         HashMap<String, Object> content = new HashMap<>();
         content.put("topic", "reply");
