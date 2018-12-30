@@ -6,7 +6,7 @@ import java.util.Random;
 import static constant.ConstEnvironment.*;
 
 public class PathGenerator {
-    ArrayDeque<GridPoint> locations;
+    ArrayDeque<GridPoint> points;
 
     /**
      * The first argument is for debugging
@@ -14,7 +14,7 @@ public class PathGenerator {
     public ArrayDeque<GridPoint> newPath(int id, Point cl, Point dest) {
         System.out.println("ID: " + id + " dest: " + dest);
         HashMap<String, Integer> dist = getManDist(dest, cl);
-        locations = new ArrayDeque<GridPoint>();
+        points = new ArrayDeque<GridPoint>();
 
         GridPoint next = new GridPoint(cl.getX(), cl.getY());
         System.out.println("ID: " + id + " init: " + next);
@@ -22,23 +22,23 @@ public class PathGenerator {
             next = getNextLocation(next, dist);
             if (next == null) break;
             System.out.println("ID: " + id + " path: " + next);
-            locations.add(next);
+            points.add(next);
         }
-        return locations;
+        return points;
     }
 
     public ArrayDeque<GridPoint> newPath(int id, Point cl, ArrayDeque<GridPoint> part, Point dest) {
         System.out.println("ID: " + id + " dest: " + dest);
         HashMap<String, Integer> dist = getManDist(dest, cl);
-        locations = new ArrayDeque<GridPoint>();
+        points = new ArrayDeque<GridPoint>();
 
         while (!part.isEmpty()) {
-            locations.add(part.remove());
+            points.add(part.remove());
         }
 
         GridPoint next;
-        if (!locations.isEmpty()) {
-            next = locations.getLast();
+        if (!points.isEmpty()) {
+            next = points.getLast();
         } else {
             next = new GridPoint(cl.getX(), cl.getY());
         }
@@ -46,9 +46,9 @@ public class PathGenerator {
             next = getNextLocation(next, dist);
             if (next == null) break;
             System.out.println("ID: " + id + " path: " + next);
-            locations.add(next);
+            points.add(next);
         }
-        return locations;
+        return points;
 
     }
 

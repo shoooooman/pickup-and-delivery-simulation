@@ -28,20 +28,17 @@ public class Priority {
         int lrdS = (int) requestContent.get("lrd");
 
         int disCsR = receiver.getLocation().calcManDist(requestPoint);
-        int disCsS = sender.getLocation().calcManDist(requestPoint);
+        @SuppressWarnings("unchecked")
+        int disCsS = ((GridPoint) requestContent.get("location")).calcManDist(requestPoint);
 
         int idR = receiver.getID();
         int idS = sender.getID();
 
         int norqR = receiver.getNumOfReq().getOrDefault(requestPoint, 0); // return 0 if the value is null
-        int norqS = sender.getNumOfReq().getOrDefault(requestPoint, 0);
+        @SuppressWarnings("unchecked")
+        int norqS = ((HashMap<GridPoint, Integer>) requestContent.get("numOfReq")).getOrDefault(requestPoint, 0);
 
-        GridPoint currentCoords = receiver.getLocation();
-        GridPoint previousCoords = receiver.getPrev();
-
-        if        (currentCoords.equals(requestPoint)) {
-            return true;
-        } else if (receiver.getLocking().contains(requestPoint)) {
+        if (receiver.getLocking().contains(requestPoint)) {
             return true;
         } else if (!receiver.getRequesting().contains(requestPoint)) {
             return false;

@@ -25,7 +25,7 @@ public class GridNode extends AbstractGridNode {
             if (waitingFrom.isEmpty()) {
 
                 // when the node for evacuation is accepted
-                if (conceding) {
+                if (conceding && acceptedLocks == 1) {
                     numOfAvoid = 0;
                 }
 
@@ -129,38 +129,30 @@ public class GridNode extends AbstractGridNode {
                 // when got replies from all the other nodes
                 if (!waiting) {
                     assert(waitingFrom.isEmpty());
-                    // boolean deadlock = checkDeadlock(locations.peek(), sender.getLocation());
-                    // boolean deadlock = checkDeadlock(sender, locations);
                     boolean deadlock;
-                    AbstractGridNode another = getNeighborByLocation(requesting.peek());
-                    if (another == null)
+                    int anotherId = getIdByLocation(requesting.peek());
+                    if (anotherId == -1) // when there is no node on requesting.peek()
                         deadlock = false;
                     else
-                        // deadlock = checkDeadlock();
-                        deadlock = checkDeadlock(another);
-                    // when the another node calculated deadlock and this node must avoid,
-                    // this node do not have to calculate if deadlock is occur one more time
-                    if (!avoid && deadlock) {
-                        // another means the node next to this node
-                        GRID_LOG("deadlock with " + another.getID());
-                        if (numOfAvoid < another.getNumOfAvoid()) {
+                        deadlock = checkDeadlock(anotherId);
+
+                    // calculate which node should avoid
+                    if (deadlock) {
+                        // "another" means the node next to this node
+                        if (numOfAvoid < otherNumOfAvoid.get(anotherId)) {
                             GRID_LOG("avoid by numOfAvoid");
                             avoid = true;
-                            another.setAvoid(false);
-                        } else if (numOfAvoid == another.getNumOfAvoid()) {
-                            if (getID() > another.getID()) {
+                        } else if (numOfAvoid == otherNumOfAvoid.get(anotherId)) {
+                            if (getID() > anotherId) {
                                 GRID_LOG("avoid by ID");
                                 avoid = true;
-                                another.setAvoid(false);
                             } else {
                                 GRID_LOG("not avoid by ID");
                                 avoid = false;
-                                another.setAvoid(true);
                             }
                         } else {
                             GRID_LOG("not avoid by numOfAvoid");
                             avoid = false;
-                            another.setAvoid(true);
                         }
                     }
 
@@ -178,7 +170,7 @@ public class GridNode extends AbstractGridNode {
                         requesting.clear();
                         numOfReq.clear();
                         path.clear();
-                        path.add(evacuationPoint);
+                        path.add(evacuationPoint); // request only for evacuationPoint
                     }
                 }
 
