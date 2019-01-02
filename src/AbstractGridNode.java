@@ -2,11 +2,13 @@ import jbotsim.Node;
 import jbotsim.Point;
 import jbotsim.Color;
 import jbotsim.Message;
+import jbotsim.Topology;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.ArrayList;
 import static constant.ConstEnvironment.*;
 import static constant.ConstUser.*;
+import static constant.ConstExperiment.*;
 
 public abstract class AbstractGridNode extends Node {
     static int id = 0;
@@ -33,6 +35,7 @@ public abstract class AbstractGridNode extends Node {
     protected HashMap<Integer, ArrayDeque<GridPoint>> otherRequestings = new HashMap<>();
     protected HashMap<Integer, Boolean> otherState = new HashMap<>();
     protected HashMap<Integer, Integer> otherNumOfAvoid = new HashMap<>();
+    protected int numTask = 0;
 
     public AbstractGridNode() {
         setIcon("/icon/node.png");
@@ -57,6 +60,19 @@ public abstract class AbstractGridNode extends Node {
 
     @Override
     public void onPostClock() {
+        // for experiment
+        if (EXPERIMENT && getTime() >= NUM_CLOCK) {
+            Topology tp = getTopology();
+            ArrayList<Node> nodes = (ArrayList<Node>) tp.getNodes();
+            int sum = 0;
+            for (Node node : nodes) {
+                AbstractGridNode gnode = (AbstractGridNode) node;
+                sum += gnode.getNumTask();
+            }
+            GRID_LOG("number of tasks=" + sum);
+            tp.pause();
+        }
+
         if (!done && !stay)
             moveDir(1.0);
     }
@@ -591,6 +607,10 @@ public abstract class AbstractGridNode extends Node {
             return true;
         else
             return false;
+    }
+
+    public int getNumTask() {
+        return numTask;
     }
 
     @Override

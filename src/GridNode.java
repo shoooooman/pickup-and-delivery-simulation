@@ -84,6 +84,9 @@ public class GridNode extends AbstractGridNode {
                 GRID_LOG("complete!");
                 /* end debugging */
 
+                // the number of tasks this node completed
+                numTask++;
+
                 this.setColor(Color.green);
 
                 path = pathGen.newPath(getID(), this.getLocation());
