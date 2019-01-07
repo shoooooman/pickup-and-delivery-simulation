@@ -1,6 +1,7 @@
 import jbotsim.Topology;
 import jbotsim.Point;
 import jbotsimx.ui.JViewer;
+import jbotsimx.ui.JTopology;
 import jbotsimx.messaging.AsyncMessageEngine;
 import java.util.Random;
 import java.util.ArrayList;
@@ -10,7 +11,10 @@ import static constant.ConstUser.*;
 public class Main {
     public static void main(String[] args) {
         Topology tp = new Topology();
-        JViewer jv = new JViewer(tp);
+        JTopology jtp = new JTopology(tp);
+        // remove links among nodes
+        jtp.disableDrawings();
+        JViewer jv = new JViewer(jtp);
         jv.getJTopology().addBackgroundPainter(new PathPainter());
         jv.getJTopology().addBackgroundPainter(new GridPainter());
         Random rand = new Random();
