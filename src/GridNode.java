@@ -10,7 +10,6 @@ import static constant.ConstEnvironment.*;
 import static constant.ConstUser.*;
 
 public class GridNode extends AbstractGridNode {
-    GridPoint evacuationPoint;
     @Override
     public void onClock() {
         if (conceding)

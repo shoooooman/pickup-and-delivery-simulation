@@ -15,7 +15,6 @@ public abstract class AbstractGridNode extends Node {
     protected PathGenerator pathGen = new PathGenerator();
     protected ArrayDeque<GridPoint> path = new ArrayDeque<>();
     protected GridPoint next, prev, dest;
-    protected boolean done = false;
     protected boolean stay = false;
     protected boolean waiting = false;
     protected boolean avoid = false;
@@ -35,6 +34,7 @@ public abstract class AbstractGridNode extends Node {
     protected HashMap<Integer, ArrayDeque<GridPoint>> otherRequestings = new HashMap<>();
     protected HashMap<Integer, Boolean> otherState = new HashMap<>();
     protected HashMap<Integer, Integer> otherNumOfAvoid = new HashMap<>();
+    protected GridPoint evacuationPoint;
     protected int numTask = 0;
 
     public AbstractGridNode() {
@@ -73,7 +73,7 @@ public abstract class AbstractGridNode extends Node {
             tp.pause();
         }
 
-        if (!done && !stay)
+        if (!stay)
             moveDir(1.0);
     }
     @Override
@@ -287,8 +287,8 @@ public abstract class AbstractGridNode extends Node {
      * Update a requesting point list with path
      * then send a request message to all the other nodes
      */
-    protected void sendRequest() {
-        while (requesting.size() + locking.size() < MAX_LOCKS) {
+    protected void sendRequest(int maxLocks) {
+        while (requesting.size() + locking.size() < maxLocks) {
             if (path.isEmpty()) break;
             requesting.add(path.remove());
         }
@@ -323,6 +323,10 @@ public abstract class AbstractGridNode extends Node {
         }
         System.out.println();
         sendAll(msg);
+    }
+
+    protected void sendRequest() {
+        sendRequest(MAX_LOCKS);
     }
 
     public AbstractGridNode getNeighborByLocation(GridPoint location) {
