@@ -33,8 +33,13 @@ public class PathPainter implements jbotsimx.ui.painting.BackgroundPainter {
                 g.setColor(Color.gray);
                 if (ite.hasNext()) {
                     GridPoint start;
-                    // when requesting is empty, the first node should be tha last of locking
-                    if ((start = requesting.peekLast()) == null) {
+                    if (requesting.isEmpty() && locking.isEmpty()) { // ghost node
+                        start = gnode.getLocation();
+                    } else if (!requesting.isEmpty()) {
+                        start = requesting.getLast();
+                    } else {
+                        // when requesting is empty, the first node should be tha last of locking
+                        // except ghost node
                         start = locking.getLast();
                     }
                     while (ite.hasNext()) {

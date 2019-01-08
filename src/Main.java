@@ -29,6 +29,7 @@ public class Main {
             initPoint.add(new Point(x, y));
             tp.addNode(x, y, new GridNode());
             // tp.addNode(x, y, new SimpleGridNode());
+            // tp.addNode(x, y, new GhostNode());
         }
         tp.setClockSpeed(CLOCK_SPEED);
         tp.setCommunicationRange(COMMUNICATION_RANGE);
