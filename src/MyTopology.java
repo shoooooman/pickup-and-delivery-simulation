@@ -10,9 +10,11 @@ import static constant.ConstExperiment.*;
 public class MyTopology extends Topology {
     // for experiment
     ExcelWriter writer = new ExcelWriter();
-    int dataNo = 0;     // count total number of data
-    int runCounter = 0; // count the number of trials with the same condition
-    int dindex = 0;     // indexes of arrays in ConstEnvironment
+    int dataNo = 0;      // count total number of data
+    int conditionNo = 0; // count the number of conditions
+    int runCounter = 0;  // count the number of trials with the same condition
+    int pindex = 0;      // indexes of arrays in ConstEnvironment
+    int dindex = 0;
     int windex = 0;
     int nindex = 0;
     // end experiment
@@ -96,6 +98,14 @@ public class MyTopology extends Topology {
         return ++dataNo;
     }
 
+    public int getConditionNo() {
+        return conditionNo;
+    }
+
+    public int incConditionNo() {
+        return ++conditionNo;
+    }
+
     public int getRunCounter() {
         return runCounter;
     }
@@ -110,6 +120,10 @@ public class MyTopology extends Topology {
 
     public int getDIndex() {
         return dindex;
+    }
+
+    public void setDIndex(int index) {
+        dindex = index;
     }
 
     public int incDIndex() {
@@ -140,6 +154,14 @@ public class MyTopology extends Topology {
         return ++nindex;
     }
 
+    public int getPIndex() {
+        return pindex;
+    }
+
+    public int incPIndex() {
+        return ++pindex;
+    }
+
     public int getWindowSize() {
         return EXPERIMENT ? WINDOW_SIZES[windex] : MAX_LOCKS;
     }
@@ -150,5 +172,13 @@ public class MyTopology extends Topology {
 
     public int getNodeNum() {
         return EXPERIMENT ? NODE_NUMS[nindex] : NODE_NUM;
+    }
+
+    public boolean getPCs() {
+        return EXPERIMENT ? PRIORITY[pindex] : P_CS;
+    }
+
+    public boolean getPRq() {
+        return EXPERIMENT ? PRIORITY[pindex] : P_RQ;
     }
 }

@@ -9,15 +9,14 @@ import static constant.ConstEnvironment.*;
 import static constant.ConstUser.*;
 
 public class SimpleGridNode extends AbstractGridNode {
+
     // points that this node will move
     // almost same as locking, but pointsToMove does not include
     // nodes that this node have already passed
     ArrayDeque<GridPoint> pointsToMove = new ArrayDeque<>();
 
     SimpleGridNode() {
-        this.setPLrd(true);
-        this.setPDisToCs(false);
-        this.setPNumOfReq(false);
+        nodeType = NodeType.Simple;
     }
 
     @Override

@@ -27,9 +27,6 @@ public abstract class AbstractGridNode extends Node {
     protected int lrd = 0; // last request date
     protected int clk = 0; // logical clock
     protected HashMap<GridPoint, Integer> numOfReq = new HashMap<>();
-    protected boolean pLrd = true;
-    protected boolean pDisToCs = true;
-    protected boolean pNumOfReq = true;
     protected HashMap<Integer, GridPoint> otherLocations = new HashMap<>();
     protected HashMap<Integer, ArrayDeque<GridPoint>> otherRequestings = new HashMap<>();
     protected HashMap<Integer, Boolean> otherState = new HashMap<>();
@@ -37,6 +34,7 @@ public abstract class AbstractGridNode extends Node {
     protected GridPoint evacuationPoint;
     protected int numTask = 0;
     protected int numStay = 0;
+    protected NodeType nodeType;
 
     public AbstractGridNode() {
         setIcon("/icon/node.png");
@@ -103,7 +101,7 @@ public abstract class AbstractGridNode extends Node {
 
             // add data to buffer
             ExcelWriter writer = tp.getExcelWriter();
-            writer.addData(tp.getDataNo(), tp.getDelay(), tp.getWindowSize(), tp.getNodeNum(), sumStays, sumTasks, varTasks);
+            writer.addData(tp.getDataNo(), nodeType, tp.getPCs(), tp.getDelay(), tp.getWindowSize(), tp.getNodeNum(), sumStays, sumTasks, varTasks);
 
             tp.incDataNo();
 
@@ -111,6 +109,11 @@ public abstract class AbstractGridNode extends Node {
                 tp.nextTrial();
             } else {
                 assert(tp.getRunCounter() == RUN_NUM);
+
+                // add summary (average and standard error) of data to buffer
+                writer.addSummary(tp.getConditionNo(), nodeType, tp.getPCs(), tp.getDelay(), tp.getWindowSize(), tp.getNodeNum());
+                tp.incConditionNo();
+
                 tp.setRunCounter(0);
                 if (tp.incNIndex() < NODE_NUMS.length) {
                     tp.nextTrial();
@@ -128,9 +131,15 @@ public abstract class AbstractGridNode extends Node {
                             tp.nextTrial();
                         } else {
                             assert(tp.getDIndex() == DELAY_AVERAGES.length);
-                            // write buffer into file
-                            writer.writeFile();
-                            tp.pause();
+                            tp.setDIndex(0);
+                            if (tp.incPIndex() < PRIORITY.length) {
+                                tp.nextTrial();
+                            } else {
+                                assert(tp.getPIndex() == PRIORITY.length);
+                                // write buffer into file
+                                writer.writeFile();
+                                tp.pause();
+                            }
                         }
                     }
                 }
@@ -558,7 +567,8 @@ public abstract class AbstractGridNode extends Node {
 
         boolean priority; // for this node
         int accepted = 0;
-        Priority judge = new Priority(pLrd, pDisToCs, pNumOfReq);
+        MyTopology tp = (MyTopology) getTopology();
+        Priority judge = new Priority(P_LRD, tp.getPCs(), tp.getPRq());
         for (GridPoint point : requestingPoints) {
             priority = judge.getPriority(this, (AbstractGridNode) sender, msg, point);
 
@@ -650,18 +660,6 @@ public abstract class AbstractGridNode extends Node {
 
     public int getNumOfAvoid() {
         return numOfAvoid;
-    }
-
-    public void setPLrd(boolean priority) {
-        pLrd = priority;
-    }
-
-    public void setPDisToCs(boolean priority) {
-        pDisToCs = priority;
-    }
-
-    public void setPNumOfReq(boolean priority) {
-        pNumOfReq = priority;
     }
 
     public boolean isOnGridPoint() {

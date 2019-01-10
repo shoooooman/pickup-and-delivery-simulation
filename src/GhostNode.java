@@ -1,7 +1,11 @@
 import jbotsim.Color;
+import static constant.ConstUser.*;
 
 public class GhostNode extends AbstractGridNode {
     // does not use requesting and locking
+    public GhostNode() {
+        nodeType = NodeType.Ghost;
+    }
 
     @Override
     public void onStart() {

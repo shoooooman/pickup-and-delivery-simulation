@@ -19,7 +19,10 @@ import static constant.ConstExperiment.*;
 
 public class ExcelWriter {
     Workbook book = null;
-    Sheet sheet = null;
+    Sheet rawSheet = null;
+    Sheet summarySheet = null;
+    final String rawSheetName = "raw";
+    final String summarySheetName = "summary";
     CellStyle style_header;
     CellStyle style_string;
     CellStyle style_int;
@@ -28,12 +31,20 @@ public class ExcelWriter {
 
     public ExcelWriter() {
         book = new SXSSFWorkbook();
-        sheet = book.createSheet();
-        if (sheet instanceof SXSSFSheet) {
-            ((SXSSFSheet) sheet).trackAllColumnsForAutoSizing();
+        rawSheet = book.createSheet();
+        summarySheet = book.createSheet();
+        if (rawSheet instanceof SXSSFSheet) {
+            ((SXSSFSheet) rawSheet).trackAllColumnsForAutoSizing();
         }
+        if (summarySheet instanceof SXSSFSheet) {
+            ((SXSSFSheet) summarySheet).trackAllColumnsForAutoSizing();
+        }
+        // set sheet names
+        book.setSheetName(0, rawSheetName);
+        book.setSheetName(1, summarySheetName);
         setStyles();
-        createHeader();
+        createRawHeader();
+        createSummaryHeader();
     }
 
     private void setStyles() {
@@ -78,10 +89,22 @@ public class ExcelWriter {
         style_datetime.setFont(font);
     }
 
-    private void createHeader() {
-        Row row = sheet.createRow(0);
+    private void createRawHeader() {
+        Row row = rawSheet.createRow(0);
         int colNumber = 0;
         Cell cell;
+
+        // node type
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_header);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue("type");
+
+        // p_cs and p_rq
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_header);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue("priority");
 
         // delay
         cell = row.createCell(colNumber++);
@@ -114,17 +137,97 @@ public class ExcelWriter {
         cell.setCellValue("sum of tasks");
 
         // variable of completed tasks
-        cell = row.createCell(colNumber++);
+        cell = row.createCell(colNumber);
         cell.setCellStyle(style_header);
         cell.setCellType(CellType.STRING);
         cell.setCellValue("var of tasks");
 
         // fix header
-        sheet.createFreezePane(0, 1);
+        rawSheet.createFreezePane(0, 1);
 
         // auto sizing columns
         for (int i = 0; i <= colNumber; i++) {
-            sheet.autoSizeColumn(i, true);
+            rawSheet.autoSizeColumn(i, true);
+        }
+    }
+
+    private void createSummaryHeader() {
+        Row row = summarySheet.createRow(0);
+        int colNumber = 0;
+        Cell cell;
+
+        // node type
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_header);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue("type");
+
+        // p_cs and p_rq
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_header);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue("priority");
+
+        // delay
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_header);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue("d");
+
+        // size of window
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_header);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue("w");
+
+        // number of robots
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_header);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue("N");
+
+        // sum of staying
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_header);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue("sum of stays");
+
+        // standard error of sum of staying
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_header);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue("se of sum of stays");
+
+        // sum of completed tasks
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_header);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue("sum of tasks");
+
+        // standard error of sum of completed tasks
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_header);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue("se of sum of tasks");
+
+        // variable of completed tasks
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_header);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue("var of tasks");
+
+        // standard error of var of completed tasks
+        cell = row.createCell(colNumber);
+        cell.setCellStyle(style_header);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue("se of var of tasks");
+
+        // fix header
+        summarySheet.createFreezePane(0, 1);
+
+        // auto sizing columns
+        for (int i = 0; i <= colNumber; i++) {
+            summarySheet.autoSizeColumn(i, true);
         }
     }
 
@@ -132,12 +235,24 @@ public class ExcelWriter {
      * Add data as a row
      * "dataNo" represents the number of the data
      */
-    public void addData(int dataNo, int delay, int windowSize, int NodeNum, int sumStays, int sumTasks, double varTasks) {
+    public void addData(int dataNo, NodeType nodeType, boolean priority, int delay, int windowSize, int NodeNum, int sumStays, int sumTasks, double varTasks) {
         // "1" means the header row
         int rowNumber = dataNo+1;
         int colNumber = 0;
-        Row row = sheet.createRow(rowNumber);
+        Row row = rawSheet.createRow(rowNumber);
         Cell cell;
+
+        // node type
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_string);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue(nodeType.name());
+
+        // p_cs and p_rq
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_string);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue(priority);
 
         // delay
         cell = row.createCell(colNumber++);
@@ -170,14 +285,99 @@ public class ExcelWriter {
         cell.setCellValue(sumTasks);
 
         // var of tasks
-        cell = row.createCell(colNumber++);
+        cell = row.createCell(colNumber);
         cell.setCellStyle(style_double);
         cell.setCellType(CellType.NUMERIC);
         cell.setCellValue(varTasks);
 
         // auto sizing columns
         for (int i = 0; i <= colNumber; i++) {
-            sheet.autoSizeColumn(i, true);
+            rawSheet.autoSizeColumn(i, true);
+        }
+    }
+
+    public void addSummary(int conditionNo, NodeType nodeType, boolean priority, int delay, int windowSize, int NodeNum) {
+        // "1" means the header row
+        int rowNumber = conditionNo+1;
+        int colNumber = 0;
+        Row row = summarySheet.createRow(rowNumber);
+        Cell cell;
+
+        // node type
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_string);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue(nodeType.name());
+
+        // p_cs and p_rq
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_string);
+        cell.setCellType(CellType.STRING);
+        cell.setCellValue(priority);
+
+        // delay
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_int);
+        cell.setCellType(CellType.NUMERIC);
+        cell.setCellValue(delay);
+
+        // size of window
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_int);
+        cell.setCellType(CellType.NUMERIC);
+        cell.setCellValue(windowSize);
+
+        // number of robots
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_int);
+        cell.setCellType(CellType.NUMERIC);
+        cell.setCellValue(NodeNum);
+
+        int startColNum = conditionNo*RUN_NUM+2; // 2 represents 1-origin and header
+        int endColNum = (conditionNo+1)*RUN_NUM+1;
+
+        // average of sum of staying
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_double);
+        cell.setCellType(CellType.FORMULA);
+        cell.setCellFormula("AVERAGE(raw!F" + startColNum + ":F" + endColNum + ")");
+
+        // se of sum of staying
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_double);
+        cell.setCellType(CellType.FORMULA);
+        cell.setCellFormula("STDEV(raw!F" + startColNum + ":F" + endColNum
+                + ")/SQRT(COUNT(raw!F" + startColNum + ":F" + endColNum + "))");
+
+        // average of sum of tasks
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_double);
+        cell.setCellType(CellType.FORMULA);
+        cell.setCellFormula("AVERAGE(raw!G" + startColNum + ":G" + endColNum + ")");
+
+        // se of sum of tasks
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_double);
+        cell.setCellType(CellType.FORMULA);
+        cell.setCellFormula("STDEV(raw!G" + startColNum + ":G" + endColNum
+                + ")/SQRT(COUNT(raw!G" + startColNum + ":G" + endColNum + "))");
+
+        // average of var of tasks
+        cell = row.createCell(colNumber++);
+        cell.setCellStyle(style_double);
+        cell.setCellType(CellType.FORMULA);
+        cell.setCellFormula("AVERAGE(raw!H" + startColNum + ":H" + endColNum + ")");
+
+        // se of var of tasks
+        cell = row.createCell(colNumber);
+        cell.setCellStyle(style_double);
+        cell.setCellType(CellType.FORMULA);
+        cell.setCellFormula("STDEV(raw!H" + startColNum + ":H" + endColNum
+                + ")/SQRT(COUNT(raw!H" + startColNum + ":H" + endColNum + "))");
+
+        // auto sizing columns
+        for (int i = 0; i <= colNumber; i++) {
+            summarySheet.autoSizeColumn(i, true);
         }
     }
 
