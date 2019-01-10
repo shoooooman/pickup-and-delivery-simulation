@@ -3,6 +3,7 @@ import jbotsim.Point;
 import jbotsim.Color;
 import jbotsim.Message;
 import jbotsim.Topology;
+import jbotsimx.messaging.AsyncMessageEngine;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -11,18 +12,17 @@ import static constant.ConstUser.*;
 import static constant.ConstExperiment.*;
 
 public abstract class AbstractGridNode extends Node {
-    static int id = 0;
     protected PathGenerator pathGen = new PathGenerator();
     protected ArrayDeque<GridPoint> path = new ArrayDeque<>();
     protected GridPoint next, prev, dest;
-    protected boolean stay = false;
+    protected boolean stay = true;
     protected boolean waiting = false;
     protected boolean avoid = false;
     protected boolean conceding = false;
     protected int numOfAvoid = 0;
     protected ArrayDeque<GridPoint> requesting = new ArrayDeque<>();
     protected ArrayDeque<GridPoint> locking = new ArrayDeque<>();
-    protected int acceptedLocks = MAX_LOCKS;
+    protected int acceptedLocks;
     protected ArrayList<Node> waitingFrom = new ArrayList<>();
     protected int lrd = 0; // last request date
     protected int clk = 0; // logical clock
@@ -36,6 +36,7 @@ public abstract class AbstractGridNode extends Node {
     protected HashMap<Integer, Integer> otherNumOfAvoid = new HashMap<>();
     protected GridPoint evacuationPoint;
     protected int numTask = 0;
+    protected int numStay = 0;
 
     public AbstractGridNode() {
         setIcon("/icon/node.png");
@@ -44,7 +45,6 @@ public abstract class AbstractGridNode extends Node {
 
     @Override
     public void onStart() {
-        setID(id++);
         path = pathGen.newPath(getID(), this.getLocation());
         // when init point is the same as dest, path will be empty
         if (!path.isEmpty()) {
@@ -58,24 +58,86 @@ public abstract class AbstractGridNode extends Node {
     @Override
     abstract public void onClock();
 
+    private int getListSum(ArrayList<Integer> list) {
+        int sum = 0;
+        for (Integer item : list) {
+            sum += item;
+        }
+        return sum;
+    }
+
+    private double getListVar(ArrayList<Integer> list) {
+        double average = ((double) getListSum(list)) / list.size();
+        double variable = 0.0;
+        for (Integer item : list) {
+            variable += Math.pow(item-average, 2);
+        }
+        variable = variable / list.size();
+        return variable;
+    }
+
     @Override
     public void onPostClock() {
-        // for experiment
-        if (EXPERIMENT && getTime() >= NUM_CLOCK) {
-            Topology tp = getTopology();
-            ArrayList<Node> nodes = (ArrayList<Node>) tp.getNodes();
-            int sum = 0;
-            for (Node node : nodes) {
-                AbstractGridNode gnode = (AbstractGridNode) node;
-                sum += gnode.getNumTask();
-            }
-            GRID_LOG("number of tasks=" + sum);
-            tp.pause();
-        }
-
         if (!stay)
             moveDir(1.0);
+        else
+            numStay++;
+
+        // for experiment
+        if (EXPERIMENT && getID() == 0 && getTime() >= CLOCK_NUM) {
+            MyTopology tp = (MyTopology) getTopology();
+
+            ArrayList<Integer> numStays = tp.getNumStays();
+            int sumStays = getListSum(numStays);
+
+            ArrayList<Integer> numTasks = tp.getNumTasks();
+            int sumTasks = getListSum(numTasks);
+            double varTasks = getListVar(numTasks);
+
+            // for debugging
+            System.out.println("(d,w,N)=(" + tp.getDelay() + "," + tp.getWindowSize() + "," + tp.getNodeNum() + ")");
+            System.out.println("sum of stays=" + sumStays);
+            System.out.println("sum of tasks=" + sumTasks);
+            System.out.println("var of tasks=" + varTasks);
+            // end debugging
+
+            // add data to buffer
+            ExcelWriter writer = tp.getExcelWriter();
+            writer.addData(tp.getDataNo(), tp.getDelay(), tp.getWindowSize(), tp.getNodeNum(), sumStays, sumTasks, varTasks);
+
+            tp.incDataNo();
+
+            if (tp.incRunCounter() < RUN_NUM) {
+                tp.nextTrial();
+            } else {
+                assert(tp.getRunCounter() == RUN_NUM);
+                tp.setRunCounter(0);
+                if (tp.incNIndex() < NODE_NUMS.length) {
+                    tp.nextTrial();
+                } else {
+                    assert(tp.getNIndex() == NODE_NUMS.length);
+                    tp.setNIndex(0);
+                    if (tp.incWIndex() < WINDOW_SIZES.length) {
+                        tp.nextTrial();
+                    } else {
+                        assert(tp.getWIndex() == WINDOW_SIZES.length);
+                        tp.setWIndex(0);
+                        if (tp.incDIndex() < DELAY_AVERAGES.length) {
+                            // set new delay
+                            tp.setMessageEngine(new AsyncMessageEngine(tp.getDelay(), AsyncMessageEngine.Type.NONFIFO));
+                            tp.nextTrial();
+                        } else {
+                            assert(tp.getDIndex() == DELAY_AVERAGES.length);
+                            // write buffer into file
+                            writer.writeFile();
+                            tp.pause();
+                        }
+                    }
+                }
+            }
+        }
     }
+
     @Override
     public void onMessage(Message msg) {
         @SuppressWarnings("unchecked")
@@ -326,7 +388,8 @@ public abstract class AbstractGridNode extends Node {
     }
 
     protected void sendRequest() {
-        sendRequest(MAX_LOCKS);
+        int maxLocks = ((MyTopology) getTopology()).getWindowSize();
+        sendRequest(maxLocks);
     }
 
     public AbstractGridNode getNeighborByLocation(GridPoint location) {
@@ -615,6 +678,10 @@ public abstract class AbstractGridNode extends Node {
 
     public int getNumTask() {
         return numTask;
+    }
+
+    public int getNumStay() {
+        return numStay;
     }
 
     @Override

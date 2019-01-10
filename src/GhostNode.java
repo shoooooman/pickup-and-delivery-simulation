@@ -5,7 +5,6 @@ public class GhostNode extends AbstractGridNode {
 
     @Override
     public void onStart() {
-        setID(id++);
         path = pathGen.newPath(getID(), this.getLocation());
         // when init point is the same as dest, path will be empty
         if (!path.isEmpty()) {

@@ -185,7 +185,7 @@ public class GridNode extends AbstractGridNode {
 
         // when have node(s) to request
         if (!waiting && (!requesting.isEmpty() || !path.isEmpty())) {
-            acceptedLocks = MAX_LOCKS;
+            acceptedLocks = ((MyTopology) getTopology()).getWindowSize();
             sendRequest();
             waitingFrom = (ArrayList<Node>) this.getNeighbors();
             waiting = true; // wait for replies from all the other nodes
