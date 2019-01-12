@@ -1,5 +1,6 @@
 import jbotsim.Message;
 import java.util.HashMap;
+import static constant.ConstExperiment.*;
 
 public class Priority {
     private boolean pLrd ;
@@ -44,31 +45,47 @@ public class Priority {
             return false;
         } else {
             if        (pLrd && lrdR < lrdS) {
-                System.out.println("lrd: ID " + receiver.getID() + "(" + lrdR + ")" + " < ID " + sender.getID() + "(" + lrdS + ")");
+                if (DEBUG)
+                    System.out.println("lrd: ID " + receiver.getID() + "(" + lrdR + ")"
+                            + " < ID " + sender.getID() + "(" + lrdS + ")");
                 return true;
             } else if (pLrd && lrdR > lrdS) {
-                System.out.println("lrd: ID " + sender.getID() + "(" + lrdS + ")" + " < ID " + receiver.getID() + "(" + lrdR + ")");
+                if (DEBUG)
+                    System.out.println("lrd: ID " + sender.getID() + "(" + lrdS + ")"
+                            + " < ID " + receiver.getID() + "(" + lrdR + ")");
                 return false;
             } else {
                 if        (pDisToCs && disCsR < disCsS) {
-                    System.out.println("dis: ID " + receiver.getID() + "(" + disCsR + ")" + " < ID " + sender.getID() + "(" + disCsS + ")");
+                    if (DEBUG)
+                        System.out.println("dis: ID " + receiver.getID() + "(" + disCsR + ")"
+                                + " < ID " + sender.getID() + "(" + disCsS + ")");
                     return true;
                 } else if (pDisToCs && disCsR > disCsS) {
-                    System.out.println("dis: ID " + sender.getID() + "(" + disCsS + ")" + " < ID " + receiver.getID() + "(" + disCsR + ")");
+                    if (DEBUG)
+                        System.out.println("dis: ID " + sender.getID() + "(" + disCsS + ")"
+                                + " < ID " + receiver.getID() + "(" + disCsR + ")");
                     return false;
                 } else {
                     if        (pNumOfReq && norqR > norqS) {
-                        System.out.println("nor: ID " + receiver.getID() + "(" + norqR + ")" + " > ID " + sender.getID() + "(" + norqS + ")");
+                        if (DEBUG)
+                            System.out.println("nor: ID " + receiver.getID() + "(" + norqR + ")"
+                                    + " > ID " + sender.getID() + "(" + norqS + ")");
                         return true;
                     } else if (pNumOfReq && norqR < norqS) {
-                        System.out.println("nor: ID " + sender.getID() + "(" + norqS + ")" + " > ID " + receiver.getID() + "(" + norqR + ")");
+                        if (DEBUG)
+                            System.out.println("nor: ID " + sender.getID() + "(" + norqS + ")"
+                                    + " > ID " + receiver.getID() + "(" + norqR + ")");
                         return false;
                     } else {
                         if (idR < idS) {
-                            System.out.println("id: ID " + receiver.getID() +  " < ID " + sender.getID());
+                            if (DEBUG)
+                                System.out.println("id: ID " + receiver.getID()
+                                        + " < ID " + sender.getID());
                             return true;
                         } else {
-                            System.out.println("id: ID " + sender.getID() +  " < ID " + receiver.getID());
+                            if (DEBUG)
+                                System.out.println("id: ID " + sender.getID()
+                                        + " < ID " + receiver.getID());
                             return false;
                         }
                     }

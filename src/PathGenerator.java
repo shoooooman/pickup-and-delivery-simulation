@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Random;
 import static constant.ConstEnvironment.*;
+import static constant.ConstExperiment.*;
 
 public class PathGenerator {
     ArrayDeque<GridPoint> points;
@@ -12,23 +13,27 @@ public class PathGenerator {
      * The first argument is for debugging
      */
     public ArrayDeque<GridPoint> newPath(int id, Point cl, Point dest) {
-        System.out.println("ID: " + id + " dest: " + dest);
+        if (DEBUG)
+            System.out.println("ID: " + id + " dest: " + dest);
         HashMap<String, Integer> dist = getManDist(dest, cl);
         points = new ArrayDeque<GridPoint>();
 
         GridPoint next = new GridPoint(cl.getX(), cl.getY());
-        System.out.println("ID: " + id + " init: " + next);
+        if (DEBUG)
+            System.out.println("ID: " + id + " init: " + next);
         while(true) {
             next = getNextLocation(next, dist);
             if (next == null) break;
-            System.out.println("ID: " + id + " path: " + next);
+            if (DEBUG)
+                System.out.println("ID: " + id + " path: " + next);
             points.add(next);
         }
         return points;
     }
 
     public ArrayDeque<GridPoint> newPath(int id, Point cl, ArrayDeque<GridPoint> part, Point dest) {
-        System.out.println("ID: " + id + " dest: " + dest);
+        if (DEBUG)
+            System.out.println("ID: " + id + " dest: " + dest);
         HashMap<String, Integer> dist = getManDist(dest, cl);
         points = new ArrayDeque<GridPoint>();
 
@@ -45,7 +50,8 @@ public class PathGenerator {
         while(true) {
             next = getNextLocation(next, dist);
             if (next == null) break;
-            System.out.println("ID: " + id + " path: " + next);
+            if (DEBUG)
+                System.out.println("ID: " + id + " path: " + next);
             points.add(next);
         }
         return points;

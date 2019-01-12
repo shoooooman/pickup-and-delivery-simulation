@@ -165,14 +165,40 @@ public abstract class AbstractGridNode extends Node {
         }
     }
 
-    protected void GRID_LOG(Object log) {
-        System.out.println("ID: " + getID() + " " + log);
+    protected void GRID_LOG() {
+        if (DEBUG) {
+            System.out.println();
+        }
     }
-    protected void GRID_LOG(Object log, boolean newLine) {
-        if (newLine)
+    protected void GRID_LOG(Object log) {
+        if (DEBUG) {
             System.out.println("ID: " + getID() + " " + log);
-        else
-            System.out.print  ("ID: " + getID() + " " + log);
+        }
+    }
+    protected void GRID_LOG(Object log, boolean withId) {
+        if (DEBUG) {
+            if (withId) {
+                System.out.println("ID: " + getID() + " " + log);
+            } else {
+                System.out.println(log.toString());
+            }
+        }
+    }
+    protected void GRID_LOG(Object log, boolean withId, boolean newLine) {
+        if (DEBUG) {
+            if (withId) {
+                if (newLine)
+                    System.out.println("ID: " + getID() + " " + log);
+                else
+                    System.out.print  ("ID: " + getID() + " " + log);
+            } else {
+                if (newLine)
+                    System.out.println(log.toString());
+                else
+                    System.out.print  (log.toString());
+            }
+        }
+
     }
 
     /**
@@ -192,7 +218,7 @@ public abstract class AbstractGridNode extends Node {
         else if (diffX == 0 && diffY == -1)
             return -Math.PI/2.0;
         else {
-            System.out.println("Cannot calculate direction");
+            GRID_LOG("Cannot calculate direction");
             return 0.0;
         }
     }
@@ -213,7 +239,7 @@ public abstract class AbstractGridNode extends Node {
             translate(0.0*distance, -1.0*distance);
         else {
             translate(Math.cos(direction)*distance, Math.sin(direction)*distance);
-            System.out.println("else!");
+            GRID_LOG("else!");
         }
     }
 
@@ -388,11 +414,11 @@ public abstract class AbstractGridNode extends Node {
         content.put("numOfReq", numOfReq);
         Object obj = (Object) content;
         Message msg = new Message(content);
-        GRID_LOG("sending request for: ", false);
+        GRID_LOG("sending request for: ", true, false);
         for (GridPoint point : requesting) {
-            System.out.print(point + " ");
+            GRID_LOG(point + " ", false, false);
         }
-        System.out.println();
+        GRID_LOG();
         sendAll(msg);
     }
 

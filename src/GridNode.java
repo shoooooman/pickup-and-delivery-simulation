@@ -44,20 +44,20 @@ public class GridNode extends AbstractGridNode {
                 }
 
                 /* for debugging */
-                GRID_LOG("locking ", false);
+                GRID_LOG("locking ", true, false);
                 for (GridPoint p : locking) {
-                    System.out.print(p);
+                    GRID_LOG(p, false, false);
                 }
-                System.out.println();
+                GRID_LOG();
                 /* end debugging */
 
                 waiting = false;
             } else {
                 /* for debugging */
-                // GRID_LOG("waitingFrom ", false);
+                // GRID_LOG("waitingFrom ", true, false);
                 // for (Node node : waitingFrom)
-                //     System.out.print(node.getID() + " ");
-                // System.out.println();
+                //     GRID_LOG(node.getID() + " ", false, false);
+                // GRID_LOG();
                 /* end debugging */
             }
         }
@@ -67,11 +67,11 @@ public class GridNode extends AbstractGridNode {
 
             /* for debugging */
             GRID_LOG(here);
-            GRID_LOG("locking ", false);
+            GRID_LOG("locking ", true, false);
             for (GridPoint p : locking) {
-                System.out.print(p);
+                GRID_LOG(p, false, false);
             }
-            System.out.println();
+            GRID_LOG();
             /* end debugging */
 
             // when reach evacuation point
