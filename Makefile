@@ -14,6 +14,7 @@ MAIN = Main
 
 LOG_DIR = ./log
 LOG_FILE = $(LOG_DIR)/log
+DATA_FILES = $(LOG_DIR)/data_raw $(LOG_DIR)/data_summary
 
 .PHONY: all clean
 
@@ -25,6 +26,7 @@ compile:
 
 execution:
 	mkdir -p $(LOG_DIR)
+	$(foreach file,$(DATA_FILES),eval rm -f $(file))
 	$(JAVA) -cp $(CLASSPATH) $(MAIN) > $(LOG_FILE)
 
 clean:
