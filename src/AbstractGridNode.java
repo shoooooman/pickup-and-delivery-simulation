@@ -137,9 +137,9 @@ public abstract class AbstractGridNode extends Node {
             // write data to file
             try (   FileWriter fw = new FileWriter("log/" + FILE_NAME_HEAD + "_raw", true);
                     PrintWriter pw = new PrintWriter(fw);) {
-                pw.format("(P,d,w,N)=(%b,%d,%d,%d)\n",
+                pw.format("# (P,d,w,N)=(%b,%d,%d,%d)\n",
                         tp.getPCs(), tp.getDelay(), tp.getWindowSize(), tp.getNodeNum());
-                pw.format("(%d,%d,%.3f)\n", sumStay, sumTask, varTask);
+                pw.format("%d, %d, %.3f\n", sumStay, sumTask, varTask);
                 pw.close();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -178,9 +178,11 @@ public abstract class AbstractGridNode extends Node {
                 // write summary to file
                 try (   FileWriter fw = new FileWriter("log/" + FILE_NAME_HEAD + "_summary", true);
                         PrintWriter pw = new PrintWriter(fw);) {
-                    pw.format("(P,d,w,N)=(%b,%d,%d,%d)\n",
+                    pw.format("# (P,d,w,N)=(%b,%d,%d,%d)\n",
                             tp.getPCs(), tp.getDelay(), tp.getWindowSize(), tp.getNodeNum());
-                    pw.format("(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f)\n",
+                    int priority = tp.getPCs() ? 1 : 0;
+                    pw.format("%d, %d, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n",
+                            priority, tp.getWindowSize(), tp.getNodeNum(),
                             aveSumStay, seSumStay, aveSumTask, seSumTask, aveVarTask, seVarTask);
                     pw.close();
                 } catch (IOException e) {
