@@ -123,10 +123,10 @@ public abstract class AbstractGridNode extends Node {
             MyTopology tp = (MyTopology) getTopology();
 
             ArrayList<Integer> numStays = tp.getNumStays();
-            int sumStay = getListSum(numStays);
+            int sumStay = (int) getListSum(numStays);
 
             ArrayList<Integer> numTasks = tp.getNumTasks();
-            int sumTask = getListSum(numTasks);
+            int sumTask = (int) getListSum(numTasks);
             double varTask = getListVar(numTasks);
 
             // record data in lists
@@ -137,8 +137,8 @@ public abstract class AbstractGridNode extends Node {
             // write data to file
             try (   FileWriter fw = new FileWriter("log/" + FILE_NAME_HEAD + "_raw", true);
                     PrintWriter pw = new PrintWriter(fw);) {
-                pw.format("(d,w,P,N)=(%d,%d,%b,%d)\n",
-                        tp.getDelay(), tp.getWindowSize(), tp.getPCs(), tp.getNodeNum());
+                pw.format("(P,d,w,N)=(%d,%d,%b,%d)\n",
+                        tp.getPCs(), tp.getDelay(), tp.getWindowSize(), tp.getNodeNum());
                 pw.format("(%d,%d,%.3f)\n", sumStay, sumTask, varTask);
                 pw.close();
             } catch (IOException e) {
@@ -178,8 +178,8 @@ public abstract class AbstractGridNode extends Node {
                 // write summary to file
                 try (   FileWriter fw = new FileWriter("log/" + FILE_NAME_HEAD + "_summary", true);
                         PrintWriter pw = new PrintWriter(fw);) {
-                    pw.format("(d,w,P,N)=(%d,%d,%b,%d)\n",
-                            tp.getDelay(), tp.getWindowSize(), tp.getPCs(), tp.getNodeNum());
+                    pw.format("(P,d,w,N)=(%d,%d,%b,%d)\n",
+                            tp.getPCs(), tp.getDelay(), tp.getWindowSize(), tp.getNodeNum());
                     pw.format("(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f)\n",
                             aveSumStay, seSumStay, aveSumTask, seSumTask, aveVarTask, seVarTask);
                     pw.close();
