@@ -17,7 +17,14 @@ public class MyTopology extends Topology {
     int dindex = 0;
     int windex = 0;
     int nindex = 0;
+    ArrayList<Integer> sumStayList = new ArrayList<>();
+    ArrayList<Integer> sumTaskList = new ArrayList<>();
+    ArrayList<Double> varTaskList = new ArrayList<>();
     // end experiment
+
+    public MyTopology(int width, int height) {
+        super(width, height);
+    }
 
     /**
      * Deploy nodes randomly although the initial positions are not the same.

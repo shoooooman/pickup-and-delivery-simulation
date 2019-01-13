@@ -7,6 +7,9 @@ import jbotsimx.messaging.AsyncMessageEngine;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.io.IOException;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import static constant.ConstEnvironment.*;
 import static constant.ConstUser.*;
 import static constant.ConstExperiment.*;
@@ -56,19 +59,53 @@ public abstract class AbstractGridNode extends Node {
     @Override
     abstract public void onClock();
 
-    private int getListSum(ArrayList<Integer> list) {
-        int sum = 0;
-        for (Integer item : list) {
-            sum += item;
+    /**
+     * Return sum of elements in the param list
+     * T should be Integer or Double
+     */
+    private <T> double getListSum(ArrayList<T> list) {
+        double sum = 0.0;
+        for (T item : list) {
+            Double val = null;
+            if      (item instanceof Integer)
+                val = ((Integer) item).doubleValue();
+            else if (item instanceof Double)
+                val = (double) item;
+            else
+                System.out.println("getListSum");
+
+            sum += val;
         }
         return sum;
     }
 
-    private double getListVar(ArrayList<Integer> list) {
-        double average = ((double) getListSum(list)) / list.size();
+    /**
+     * Return variable of elements in the param list
+     * T should be Integer or Double
+     */
+    private <T> double getListVar(ArrayList<T> list) {
+        double average = getListSum(list) / list.size();
+        double variable = getListVar(list, average);
+        return variable;
+    }
+
+    /**
+     * Return variable of elements in the param list
+     * T should be Integer or Double
+     * Using average to calculate variable for saving the amount of caliculation
+     */
+    private <T> double getListVar(ArrayList<T> list, double average) {
         double variable = 0.0;
-        for (Integer item : list) {
-            variable += Math.pow(item-average, 2);
+        for (T item : list) {
+            Double val = null;
+            if      (item instanceof Integer)
+                val = ((Integer) item).doubleValue();
+            else if (item instanceof Double)
+                val = (double) item;
+            else
+                System.out.println("getListVar");
+
+            variable += Math.pow(val-average, 2);
         }
         variable = variable / list.size();
         return variable;
@@ -86,22 +123,38 @@ public abstract class AbstractGridNode extends Node {
             MyTopology tp = (MyTopology) getTopology();
 
             ArrayList<Integer> numStays = tp.getNumStays();
-            int sumStays = getListSum(numStays);
+            int sumStay = getListSum(numStays);
 
             ArrayList<Integer> numTasks = tp.getNumTasks();
-            int sumTasks = getListSum(numTasks);
-            double varTasks = getListVar(numTasks);
+            int sumTask = getListSum(numTasks);
+            double varTask = getListVar(numTasks);
+
+            // record data in lists
+            tp.sumStayList.add(sumStay);
+            tp.sumTaskList.add(sumTask);
+            tp.varTaskList.add(varTask);
+
+            // write data to file
+            try (   FileWriter fw = new FileWriter("log/" + FILE_NAME_HEAD + "_raw", true);
+                    PrintWriter pw = new PrintWriter(fw);) {
+                pw.format("(d,w,P,N)=(%d,%d,%b,%d)\n",
+                        tp.getDelay(), tp.getWindowSize(), tp.getPCs(), tp.getNodeNum());
+                pw.format("(%d,%d,%.3f)\n", sumStay, sumTask, varTask);
+                pw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             // for debugging
             System.out.println("(d,w,N)=(" + tp.getDelay() + "," + tp.getWindowSize() + "," + tp.getNodeNum() + ")");
-            System.out.println("sum of stays=" + sumStays);
-            System.out.println("sum of tasks=" + sumTasks);
-            System.out.println("var of tasks=" + varTasks);
+            System.out.println("sum of stays=" + sumStay);
+            System.out.println("sum of tasks=" + sumTask);
+            System.out.println("var of tasks=" + varTask);
             // end debugging
 
-            // add data to buffer
-            ExcelWriter writer = tp.getExcelWriter();
-            writer.addData(tp.getDataNo(), nodeType, tp.getPCs(), tp.getDelay(), tp.getWindowSize(), tp.getNodeNum(), sumStays, sumTasks, varTasks);
+            // add data to excel buffer
+            // ExcelWriter writer = tp.getExcelWriter();
+            // writer.addData(tp.getDataNo(), nodeType, tp.getPCs(), tp.getDelay(), tp.getWindowSize(), tp.getNodeNum(), sumStay, sumTask, varTask);
 
             tp.incDataNo();
 
@@ -109,9 +162,37 @@ public abstract class AbstractGridNode extends Node {
                 tp.nextTrial();
             } else {
                 assert(tp.getRunCounter() == RUN_NUM);
+                assert(tp.sumStayList.size() == RUN_NUM);
+                assert(tp.sumTaskList.size() == RUN_NUM);
+                assert(tp.varTaskList.size() == RUN_NUM);
 
-                // add summary (average and standard error) of data to buffer
-                writer.addSummary(tp.getConditionNo(), nodeType, tp.getPCs(), tp.getDelay(), tp.getWindowSize(), tp.getNodeNum());
+                double aveSumStay = ((double) getListSum(tp.sumStayList)) / tp.sumStayList.size();
+                double seSumStay = Math.sqrt(getListVar(tp.sumStayList, aveSumStay) / tp.sumStayList.size());
+
+                double aveSumTask = ((double) getListSum(tp.sumTaskList)) / tp.sumTaskList.size();
+                double seSumTask = Math.sqrt(getListVar(tp.sumTaskList, aveSumTask) / tp.sumTaskList.size());
+
+                double aveVarTask = ((double) getListSum(tp.varTaskList)) / tp.varTaskList.size();
+                double seVarTask = Math.sqrt(getListVar(tp.varTaskList, aveVarTask) / tp.varTaskList.size());
+
+                // write summary to file
+                try (   FileWriter fw = new FileWriter("log/" + FILE_NAME_HEAD + "_summary", true);
+                        PrintWriter pw = new PrintWriter(fw);) {
+                    pw.format("(d,w,P,N)=(%d,%d,%b,%d)\n",
+                            tp.getDelay(), tp.getWindowSize(), tp.getPCs(), tp.getNodeNum());
+                    pw.format("(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f)\n",
+                            aveSumStay, seSumStay, aveSumTask, seSumTask, aveVarTask, seVarTask);
+                    pw.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                tp.sumStayList.clear();
+                tp.sumTaskList.clear();
+                tp.varTaskList.clear();
+
+                // add summary (average and standard error) of data to excel buffer
+                // writer.addSummary(tp.getConditionNo(), nodeType, tp.getPCs(), tp.getDelay(), tp.getWindowSize(), tp.getNodeNum());
                 tp.incConditionNo();
 
                 tp.setRunCounter(0);
@@ -136,8 +217,8 @@ public abstract class AbstractGridNode extends Node {
                                 tp.nextTrial();
                             } else {
                                 assert(tp.getPIndex() == PRIORITY.length);
-                                // write buffer into file
-                                writer.writeFile();
+                                // write buffer into excel file
+                                // writer.writeFile();
                                 tp.pause();
                             }
                         }
