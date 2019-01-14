@@ -1,7 +1,6 @@
 import jbotsim.Point;
 import jbotsimx.ui.JViewer;
 import jbotsimx.ui.JTopology;
-import jbotsimx.messaging.AsyncMessageEngine;
 import static constant.ConstEnvironment.*;
 import static constant.ConstUser.*;
 
@@ -17,7 +16,7 @@ public class Main {
         tp.deployNodes();
         tp.setClockSpeed(CLOCK_SPEED);
         tp.setCommunicationRange(COMMUNICATION_RANGE);
-        tp.setMessageEngine(new AsyncMessageEngine(tp.getDelay(), AsyncMessageEngine.Type.NONFIFO));
+        tp.setMessageEngine(new ExponentialAsyncMessageEngine(tp.getDelay(), ExponentialAsyncMessageEngine.Type.NONFIFO));
         tp.start();
     }
 }

@@ -12,5 +12,12 @@ public final class ConstEnvironment {
     // Topology
     public static final int CLOCK_SPEED = 0;
     public static final int COMMUNICATION_RANGE = 1000;
-    public static final int DELAY_AVERAGE = 10;
+    public static final int DELAY_AVERAGE = 5;
+
+    // For Delay
+    // Exponential Distribution
+    public static final double EXPONENTIAL_LAMBDA = 1.0 / DELAY_AVERAGE;
+    // Pareto Distribution
+    public static final double PARETO_X_M = 1.0;
+    public static final double PARETO_K = ((double) DELAY_AVERAGE) / (DELAY_AVERAGE-1);
 }
