@@ -152,10 +152,6 @@ public abstract class AbstractGridNode extends Node {
             System.out.println("var of tasks=" + varTask);
             // end debugging
 
-            // add data to excel buffer
-            // ExcelWriter writer = tp.getExcelWriter();
-            // writer.addData(tp.getDataNo(), nodeType, tp.getPCs(), tp.getDelay(), tp.getWindowSize(), tp.getNodeNum(), sumStay, sumTask, varTask);
-
             tp.incDataNo();
 
             if (tp.incRunCounter() < RUN_NUM) {
@@ -193,8 +189,6 @@ public abstract class AbstractGridNode extends Node {
                 tp.sumTaskList.clear();
                 tp.varTaskList.clear();
 
-                // add summary (average and standard error) of data to excel buffer
-                // writer.addSummary(tp.getConditionNo(), nodeType, tp.getPCs(), tp.getDelay(), tp.getWindowSize(), tp.getNodeNum());
                 tp.incConditionNo();
 
                 tp.setRunCounter(0);
@@ -219,8 +213,6 @@ public abstract class AbstractGridNode extends Node {
                                 tp.nextTrial();
                             } else {
                                 assert(tp.getPIndex() == PRIORITY.length);
-                                // write buffer into excel file
-                                // writer.writeFile();
                                 tp.pause();
                             }
                         }
