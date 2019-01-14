@@ -9,7 +9,6 @@ import static constant.ConstExperiment.*;
 
 public class MyTopology extends Topology {
     // for experiment
-    ExcelWriter writer = new ExcelWriter();
     int dataNo = 0;      // count total number of data
     int conditionNo = 0; // count the number of conditions
     int runCounter = 0;  // count the number of trials with the same condition
@@ -91,10 +90,6 @@ public class MyTopology extends Topology {
             list.add(gnode.getID(), gnode.getNumTask());
         }
         return list;
-    }
-
-    public ExcelWriter getExcelWriter() {
-        return writer;
     }
 
     public int getDataNo() {

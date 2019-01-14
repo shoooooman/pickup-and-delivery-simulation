@@ -3,7 +3,7 @@ JAVA = java
 
 SRC_DIR = ./src ./src/constant
 SRCS = $(foreach dir,$(SRC_DIR),$(wildcard $(dir)/*.java))
-LIB_SRCS = ./lib/jbotsim/*:./lib/poi-4.0.1/*:./lib/poi-4.0.1/lib/*:./lib/poi-4.0.1/ooxml-lib/*
+LIB_SRCS = ./lib/jbotsim/*
 CLASS_DIR = ./bin
 ICON_DIR = ./src/icon
 ICON_SRC = $(ICON_DIR)/node.png
