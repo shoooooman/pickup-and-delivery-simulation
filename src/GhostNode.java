@@ -9,12 +9,15 @@ public class GhostNode extends AbstractGridNode {
 
     @Override
     public void onStart() {
+        stay = false;
         path = pathGen.newPath(getID(), this.getLocation());
         // when init point is the same as dest, path will be empty
         if (!path.isEmpty()) {
             dest = path.getLast();
         } else {
             dest = getLocation();
+            // to avoid "move" to the current point (goes wrong direction)
+            stay = true;
         }
         next = prev = this.getLocation();
     }
@@ -22,6 +25,7 @@ public class GhostNode extends AbstractGridNode {
     @Override
     public void onClock() {
         this.setColor(Color.blue);
+        stay = false;
 
         GridPoint here = this.getLocation();
 
@@ -49,6 +53,8 @@ public class GhostNode extends AbstractGridNode {
                     dest = path.getLast();
                 } else {
                     dest = getLocation();
+                    // to avoid "move" to the current point (goes wrong direction)
+                    stay = true;
                 }
             }
 
