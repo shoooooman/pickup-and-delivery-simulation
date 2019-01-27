@@ -65,7 +65,7 @@ public class PathGenerator {
 
     public GridPoint newDestination(Point start) {
         Random rand = new Random();
-        GridPoint dest = new GridPoint(rand.nextInt(GRID_SIZE_X)*CELL_SIZE_X, rand.nextInt(GRID_SIZE_Y)*CELL_SIZE_Y);
+        GridPoint dest = new GridPoint(rand.nextInt(GRID_SIZE_X+1)*CELL_SIZE_X, rand.nextInt(GRID_SIZE_Y+1)*CELL_SIZE_Y);
         return dest;
     }
 

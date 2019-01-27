@@ -35,8 +35,8 @@ public class MyTopology extends Topology {
             // avoid the same initial point
             double x, y;
             do {
-                x = rand.nextInt(GRID_SIZE_X)*CELL_SIZE_X;
-                y = rand.nextInt(GRID_SIZE_Y)*CELL_SIZE_Y;
+                x = rand.nextInt(GRID_SIZE_X+1)*CELL_SIZE_X;
+                y = rand.nextInt(GRID_SIZE_Y+1)*CELL_SIZE_Y;
             } while (initPoint.contains(new Point(x, y)));
             initPoint.add(new Point(x, y));
             switch(NODE_TYPE) {
